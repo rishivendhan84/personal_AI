@@ -37,10 +37,21 @@ Set the user's `telegram_id` so the Direction Engine knows where to send nudges.
 Provider choice lives solely in `src/lib/ai/`. The embedding column is locked to
 768 dims (Gemini `text-embedding-004`) — **do not swap embedders mid-corpus**.
 
-## 4. Scheduler + queue (QStash)
+## 4. Scheduler + queue
 
-`QSTASH_TOKEN` powers async capture and the Direction Engine. Without it, capture
-falls back to inline fetch (fine for local/dev).
+### Vercel Cron (built in — `vercel.json`)
+`vercel.json` already schedules the two core Direction Engine triggers on the
+**Production** deployment (times are **UTC**; tuned for America/New_York EDT):
+- `0 11 * * *` → `/api/cron/brief` (≈07:00 ET morning brief)
+- `0 1  * * *` → `/api/cron/evening` (≈21:00 ET evening review)
+
+The Vercel Hobby plan allows 2 daily cron jobs — adjust the UTC times if your
+timezone differs. Hourly triggers (slip/context) and async capture need QStash
+(below) or a Pro plan.
+
+### QStash (optional — hourly triggers + async capture)
+`QSTASH_TOKEN` powers async capture and the hourly Direction Engine triggers.
+Without it, capture falls back to inline fetch (fine at single-user scale).
 
 Schedule these cron triggers (times in your TZ) to hit your deployed routes:
 
