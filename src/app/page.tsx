@@ -1,9 +1,9 @@
 import { CalendarClock } from "lucide-react";
 import { getLatestBrief } from "@/lib/brief";
 import { getAdminClient } from "@/lib/db/server";
-import { USER_ID, DEFAULT_TZ, dateKeyInTz } from "@/lib/utils";
+import { USER_ID, dateKeyInTz } from "@/lib/utils";
 import { computeStreak } from "@/lib/streaks";
-import { URGENCY_ORDER } from "@/lib/ui";
+import { URGENCY_ORDER, USER_TZ } from "@/lib/ui";
 import type {
   User,
   CalendarEvent,
@@ -63,7 +63,11 @@ export default async function DashboardPage() {
 
   const userRes = await db.from("users").select("*").eq("id", USER_ID).maybeSingle<User>();
   const user = userRes.data;
-  const tz = user?.timezone ?? DEFAULT_TZ;
+  // Single-user app fixed to Chennai: drive the console off the declared home
+  // timezone (USER_TZ = Asia/Kolkata) so the clock is correct even if the DB
+  // row predates migration 0004. Falls back to the row only if it's already IST.
+  const tz =
+    user?.timezone === "Asia/Kolkata" ? user.timezone : USER_TZ;
   const todayKey = dateKeyInTz(new Date(), tz);
 
   const [brief, events, taskCounts, tasksDoneToday, bestStreak, netWorth, nutrition] =
