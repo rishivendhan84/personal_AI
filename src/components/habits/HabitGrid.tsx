@@ -1,9 +1,11 @@
 "use client";
 import * as React from "react";
-import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import { EmptyState } from "@/components/ui/page";
+import { BentoCard } from "@/components/ui/bento-card";
 import { getBrowserClient } from "@/lib/db/browser";
 import { cn } from "@/lib/utils";
+import { bentoContainer } from "@/lib/motion";
 import { HabitToggle } from "@/components/habits/HabitToggle";
 import { StreakBadge } from "@/components/habits/StreakBadge";
 import type { HabitView } from "@/app/api/habits/route";
@@ -13,6 +15,9 @@ import type { HabitView } from "@/app/api/habits/route";
  *  - one-tap toggle → optimistic flip → POST /api/habits/log → refetch.
  *  - Supabase Realtime on habit_logs (browser client) keeps devices in sync; if
  *    the browser client is null (unconfigured) we just rely on manual refetch.
+ *
+ * Restyled into a premium dark bento grid of large circular tap-targets. The
+ * completion fill + click-spark live in <HabitToggle>; behavior here is unchanged.
  */
 export function HabitGrid({ initial }: { initial: HabitView[] }) {
   const [habits, setHabits] = React.useState<HabitView[]>(initial);
@@ -97,13 +102,19 @@ export function HabitGrid({ initial }: { initial: HabitView[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <motion.div
+      variants={bentoContainer}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3"
+    >
       {habits.map((view) => (
-        <Card
+        <BentoCard
           key={view.habit.id}
+          glow={view.doneToday}
           className={cn(
-            "flex items-center gap-4 p-4 transition-colors",
-            view.doneToday && "border-emerald-600/40 bg-emerald-600/5"
+            "flex flex-col items-center gap-4 p-5 text-center sm:p-6",
+            view.doneToday && "border-violet/40"
           )}
         >
           <HabitToggle
@@ -112,23 +123,25 @@ export function HabitGrid({ initial }: { initial: HabitView[] }) {
             onToggle={() => void toggle(view)}
             label={view.habit.name}
           />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="truncate font-medium">{view.habit.name}</h3>
-            </div>
+
+          <div className="min-w-0 w-full">
+            <h3 className="truncate text-sm font-semibold sm:text-base">
+              {view.habit.name}
+            </h3>
             {view.habit.target && (
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {view.habit.target}
               </p>
             )}
-            <StreakBadge
-              current={view.currentStreak}
-              longest={view.longestStreak}
-              className="mt-2"
-            />
           </div>
-        </Card>
+
+          <StreakBadge
+            current={view.currentStreak}
+            longest={view.longestStreak}
+            className="justify-center"
+          />
+        </BentoCard>
       ))}
-    </div>
+    </motion.div>
   );
 }

@@ -1,9 +1,9 @@
 -- Seed data for the single user + default habits (PRD §7.3).
 -- Idempotent: safe to re-run.
 
-insert into users (id, name, timezone, current_focus)
-values ('00000000-0000-0000-0000-000000000001', 'Rishi', 'America/New_York',
-        'Ship the PAIOS vertical slice')
+insert into users (id, name, timezone, current_focus, current_location)
+values ('00000000-0000-0000-0000-000000000001', 'Rishi', 'Asia/Kolkata',
+        'Ship the PAIOS vertical slice', 'Chennai, India')
 on conflict (id) do nothing;
 
 insert into habits (name, target, active) values

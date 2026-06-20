@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { Sparkles, Database, Search as SearchIcon, Layers } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { BentoCard } from "@/components/ui/bento-card";
 import { cn } from "@/lib/utils";
 import type { BrainRoute } from "@/lib/brain";
 
@@ -11,16 +10,31 @@ const ROUTE_META: Record<
   BrainRoute,
   { label: string; icon: React.ComponentType<{ className?: string }> }
 > = {
-  structured: { label: "Structured (SQL)", icon: Database },
-  vector: { label: "Vector (semantic)", icon: SearchIcon },
-  mixed: { label: "Mixed (hybrid)", icon: Layers },
+  structured: { label: "structured", icon: Database },
+  vector: { label: "vector", icon: SearchIcon },
+  mixed: { label: "mixed", icon: Layers },
 };
+
+/** Small violet pill showing which retrieval route the Brain used. */
+function RouteBadge({ route }: { route: BrainRoute }) {
+  const meta = ROUTE_META[route];
+  const Icon = meta.icon;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-chip border border-violet/30 bg-violet/15 px-2.5 py-1 text-xs font-medium text-violet">
+      <Icon className="h-3 w-3" />
+      <span className="font-mono">{meta.label}</span>
+    </span>
+  );
+}
 
 /** Highlight [n] citation markers so they read as references, not literals. */
 function renderWithCitations(text: string) {
   return text.split(/(\[\d+\])/g).map((part, i) =>
     /^\[\d+\]$/.test(part) ? (
-      <sup key={i} className="mx-0.5 font-mono text-[0.65rem] text-primary">
+      <sup
+        key={i}
+        className="mx-0.5 rounded-sm bg-violet/15 px-1 font-mono text-[0.65rem] tabular-nums text-violet"
+      >
         {part}
       </sup>
     ) : (
@@ -41,43 +55,38 @@ export function AnswerCard({
   answer: string | null;
   route: BrainRoute;
 }) {
-  const meta = ROUTE_META[route];
-  const RouteIcon = meta.icon;
-
   if (answer === null) {
     return (
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm text-muted-foreground">
+      <BentoCard className="p-5 sm:p-6">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span className="text-sm font-medium text-muted-foreground">
             Search results
-          </CardTitle>
-          <Badge variant="secondary" className="gap-1">
-            <RouteIcon className="h-3 w-3" />
-            {meta.label}
-          </Badge>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+          </span>
+          <RouteBadge route={route} />
+        </div>
+        <p className="text-sm text-muted-foreground">
           AI answers are off (no model configured) — showing matched sources below.
-        </CardContent>
-      </Card>
+        </p>
+      </BentoCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-4 w-4 text-primary" />
+    <BentoCard glow className="p-5 sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <span className="flex items-center gap-2 text-base font-medium text-foreground">
+          <Sparkles className="h-4 w-4 text-violet" />
           Answer
-        </CardTitle>
-        <Badge variant="secondary" className="gap-1">
-          <RouteIcon className="h-3 w-3" />
-          {meta.label}
-        </Badge>
-      </CardHeader>
-      <CardContent className={cn("whitespace-pre-wrap text-sm leading-relaxed")}>
+        </span>
+        <RouteBadge route={route} />
+      </div>
+      <div
+        className={cn(
+          "whitespace-pre-wrap text-[0.95rem] leading-relaxed text-foreground/90"
+        )}
+      >
         {renderWithCitations(answer)}
-      </CardContent>
-    </Card>
+      </div>
+    </BentoCard>
   );
 }

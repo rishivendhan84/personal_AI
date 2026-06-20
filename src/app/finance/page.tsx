@@ -77,7 +77,7 @@ export default async function FinancePage() {
             <CategoryBreakdown categories={latest.categories ?? {}} />
             <SpendTrend history={history} />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-mono text-xs tabular-nums text-muted-foreground">
             Last computed {new Date(latest.computed_at).toLocaleString()}
           </p>
         </div>

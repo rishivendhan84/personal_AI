@@ -10,8 +10,8 @@ export function cn(...inputs: ClassValue[]) {
 export const USER_ID =
   process.env.PAIOS_USER_ID ?? "00000000-0000-0000-0000-000000000001";
 
-/** Default timezone fallback if the user row hasn't loaded. */
-export const DEFAULT_TZ = "America/New_York";
+/** Default timezone fallback if the user row hasn't loaded (Chennai, IST). */
+export const DEFAULT_TZ = "Asia/Kolkata";
 
 /** YYYY-MM-DD for a given date in a given IANA timezone (for log_date, brief_date). */
 export function dateKeyInTz(date: Date, timeZone: string): string {

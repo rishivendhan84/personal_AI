@@ -40,7 +40,7 @@ export default async function TasksPage() {
     <>
       <PageHeader
         title="Tasks"
-        description="Kanban, list, or category — sorted by priority, linked to goals."
+        description="Tier board, list, or category — sorted by priority, linked to goals."
       />
       <TaskBoard initialTasks={tasks} goals={goals} projects={projects} />
     </>

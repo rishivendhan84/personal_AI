@@ -10,6 +10,9 @@ renders a setup hint instead of crashing. Add integrations incrementally.
    - `supabase/migrations/0001_init.sql` (schema + pgvector)
    - `supabase/migrations/0002_seed.sql` (single user + default habits)
    - `supabase/migrations/0003_match_memory_chunks.sql` (Brain vector RPC)
+   - `supabase/migrations/0004_nutrition.sql` (Nutrition tables + sets the user to
+     Chennai / `Asia/Kolkata`). **Run this against an already-live DB too** — it
+     `update`s the existing user row's timezone + location.
 3. Set in `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 

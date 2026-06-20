@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { cn } from "@/lib/utils";
 
 /**
@@ -10,6 +10,10 @@ import { cn } from "@/lib/utils";
  * (read Sheets → categorize labels → deterministic sums → upsert snapshot), then
  * router.refresh() re-runs the server page so the new cached snapshot shows. The
  * same endpoint is also hit by the daily cron.
+ *
+ * Behavior preserved exactly; restyled as a ShimmerButton with a spin state.
+ * If Google Sheets is unconfigured the endpoint returns { skipped } — shown as a
+ * subtle hint beside the button.
  */
 export function RefreshButton() {
   const router = useRouter();
@@ -36,12 +40,14 @@ export function RefreshButton() {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      {note && <span className="text-xs text-muted-foreground">{note}</span>}
-      <Button variant="outline" size="sm" onClick={onClick} disabled={busy}>
-        <RefreshCw className={cn("h-4 w-4", busy && "animate-spin")} />
-        Refresh
-      </Button>
+    <div className="flex items-center gap-3">
+      {note && (
+        <span className="max-w-[16rem] text-xs text-muted-foreground">{note}</span>
+      )}
+      <ShimmerButton onClick={onClick} loading={busy} aria-label="Refresh finance snapshot">
+        <RefreshCw className={cn("h-4 w-4 text-cyan", busy && "animate-spin")} aria-hidden />
+        {busy ? "Refreshing…" : "Refresh"}
+      </ShimmerButton>
     </div>
   );
 }

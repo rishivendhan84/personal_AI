@@ -55,12 +55,31 @@ export default async function HabitsPage() {
   });
 
   const doneCount = initial.filter((h) => h.doneToday).length;
+  const total = initial.length;
+  const dateLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: DEFAULT_TZ,
+  });
 
   return (
     <>
       <PageHeader
         title="Habits"
-        description={`${doneCount} of ${initial.length} done today`}
+        description="One-tap daily habits with streaks."
+        action={
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">{dateLabel}</p>
+            <p className="mt-1 font-mono text-lg font-semibold tabular-nums">
+              <span className={doneCount === total && total > 0 ? "text-violet" : "text-foreground"}>
+                {doneCount}
+              </span>
+              <span className="text-muted-foreground">/{total}</span>{" "}
+              <span className="text-sm font-normal text-muted-foreground">done today</span>
+            </p>
+          </div>
+        }
       />
       <HabitGrid initial={initial} />
     </>

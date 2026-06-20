@@ -2,12 +2,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 
 /**
  * Manual calendar refresh (PRD §7.2). POSTs /api/calendar/sync (Google → DB
  * upsert) then refreshes the page to re-read the cache. No AI. Surfaces the
- * "not configured" skip so the user knows why nothing changed.
+ * "not configured" skip so the user knows why nothing changed. Restyled as a
+ * ShimmerButton with a spin state; data/API behavior is unchanged.
  */
 export function SyncButton() {
   const router = useRouter();
@@ -33,15 +34,17 @@ export function SyncButton() {
 
   return (
     <div className="flex items-center gap-3">
-      {note && <span className="text-xs text-muted-foreground">{note}</span>}
-      <Button variant="outline" size="sm" onClick={sync} disabled={loading}>
+      {note && (
+        <span className="text-xs text-muted-foreground/80 tabular-nums">{note}</span>
+      )}
+      <ShimmerButton onClick={sync} loading={loading} aria-label="Sync calendar">
         {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin text-violet" />
         ) : (
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-4 w-4 text-violet" />
         )}
         Sync
-      </Button>
+      </ShimmerButton>
     </div>
   );
 }

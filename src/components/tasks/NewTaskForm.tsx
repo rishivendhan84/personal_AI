@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { CATEGORIES, URGENCIES, URGENCY_LABEL } from "./constants";
 
-const SELECT = "h-9 rounded-md border border-input bg-transparent px-2 text-sm";
+const SELECT =
+  "h-9 rounded-chip border border-white/10 bg-white/[0.03] px-2.5 text-sm text-foreground outline-none transition-colors hover:bg-white/[0.06] focus:border-violet/50";
 
 /**
  * Inline task creator. Optional goal + project picker (PRD §7.4) — projects are
@@ -87,7 +88,7 @@ export function NewTaskForm({
   return (
     <form
       onSubmit={submit}
-      className="space-y-2 rounded-lg border border-border bg-card p-3 shadow-sm"
+      className="glass gradient-border space-y-2 rounded-panel p-3 shadow-card"
     >
       <Input
         autoFocus

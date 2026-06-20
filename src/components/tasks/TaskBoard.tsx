@@ -1,30 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Columns3, List, LayoutGrid, RefreshCw, Search } from "lucide-react";
-import type { Goal, GoalProject, Task, TaskCategory, TaskStatus, TaskUrgency } from "@/lib/db/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
+import { Columns3, List, LayoutGrid, RefreshCw, Search, Command } from "lucide-react";
+import type { Goal, GoalProject, Task, TaskCategory, TaskUrgency } from "@/lib/db/types";
 import { EmptyState } from "@/components/ui/page";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { cn } from "@/lib/utils";
+import { URGENCY, URGENCY_ORDER } from "@/lib/ui";
+import { bentoContainer, useReducedMotion } from "@/lib/motion";
 import { TaskCard } from "./TaskCard";
 import { NewTaskForm } from "./NewTaskForm";
-import {
-  CATEGORIES,
-  STATUSES,
-  STATUS_LABEL,
-  URGENCIES,
-  URGENCY_LABEL,
-} from "./constants";
+import { CATEGORIES, URGENCY_LABEL } from "./constants";
 
 type View = "kanban" | "list" | "category";
-const SELECT = "h-9 rounded-md border border-input bg-transparent px-2 text-sm";
+const SELECT =
+  "h-9 rounded-chip border border-white/10 bg-white/[0.03] px-2.5 text-sm text-foreground outline-none transition-colors hover:bg-white/[0.06] focus:border-violet/50";
 
 /**
  * The interactive tasks board (PRD §7.4). Owns task state locally so mutations
- * feel instant (optimistic), then PATCHes the server. View switcher: Kanban
- * (columns by status), List, Category. Filters are STRUCTURED (text/category/
- * urgency) — not the Brain's semantic search. Drag-and-drop is native HTML5.
+ * feel instant (optimistic), then PATCHes the server. Default view is Kanban
+ * grouped by URGENCY TIER (today/week/month/someday), each column tier-colored.
+ * Dragging a card to another tier column updates its `urgency` + `sort_order`.
+ * Filters are STRUCTURED (text/category/urgency) — not the Brain's semantic search.
+ * Drag-and-drop stays native HTML5; framer-motion adds layout reorder + a clear
+ * drop placeholder.
  */
 export function TaskBoard({
   initialTasks,
@@ -38,7 +38,9 @@ export function TaskBoard({
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [view, setView] = useState<View>("kanban");
   const [dragId, setDragId] = useState<string | null>(null);
+  const [overTier, setOverTier] = useState<TaskUrgency | null>(null);
   const [prioritizing, setPrioritizing] = useState(false);
+  const reduced = useReducedMotion();
 
   // Structured filters.
   const [q, setQ] = useState("");
@@ -115,19 +117,20 @@ export function TaskBoard({
   }
 
   /**
-   * Drop handler. In Kanban a drop onto a status column sets status; otherwise it
-   * just reorders. We also recompute sort_order so the dropped task lands above
-   * the target group and persist both. Dependency-free per PRD.
+   * Drop handler. In Kanban a drop onto a tier column sets `urgency`; otherwise
+   * it just reorders. We recompute sort_order so the dropped task lands above the
+   * target group and persist both. Dependency-free per PRD.
    */
-  async function handleDrop(target: { status?: TaskStatus }) {
+  async function handleDrop(target: { urgency?: TaskUrgency }) {
     const id = dragId;
     setDragId(null);
+    setOverTier(null);
     if (!id) return;
     const dragged = tasks.find((t) => t.id === id);
     if (!dragged) return;
 
     const patch: Partial<Task> = {};
-    if (target.status && target.status !== dragged.status) patch.status = target.status;
+    if (target.urgency && target.urgency !== dragged.urgency) patch.urgency = target.urgency;
     // New sort_order = one less than the current min so it floats to the top of
     // its group. Cheap + deterministic; full re-indexing isn't needed here.
     const minOrder = Math.min(0, ...tasks.map((t) => t.sort_order));
@@ -136,35 +139,42 @@ export function TaskBoard({
     if (Object.keys(patch).length) await patchTask(id, patch);
   }
 
+  function endDrag() {
+    setDragId(null);
+    setOverTier(null);
+  }
+
   const onCreated = (task: Task) => setTasks((prev) => [task, ...prev]);
 
   return (
     <div className="space-y-4">
       {/* Toolbar: view switcher + actions */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-md border border-border p-0.5">
-          <ViewBtn active={view === "kanban"} onClick={() => setView("kanban")} icon={Columns3} label="Kanban" />
+        <div className="flex rounded-chip border border-white/10 bg-white/[0.03] p-0.5">
+          <ViewBtn active={view === "kanban"} onClick={() => setView("kanban")} icon={Columns3} label="Tiers" />
           <ViewBtn active={view === "list"} onClick={() => setView("list")} icon={List} label="List" />
           <ViewBtn active={view === "category"} onClick={() => setView("category")} icon={LayoutGrid} label="Category" />
         </div>
-        <Button variant="outline" size="sm" onClick={refreshPriorities} disabled={prioritizing}>
+
+        <ShimmerButton onClick={refreshPriorities} loading={prioritizing}>
           <RefreshCw className={cn("h-4 w-4", prioritizing && "animate-spin")} />
           {prioritizing ? "Scoring…" : "Refresh priorities"}
-        </Button>
+        </ShimmerButton>
+
         <div className="ml-auto">
           <NewTaskForm goals={goals} projects={projects} onCreated={onCreated} />
         </div>
       </div>
 
-      {/* Structured filter box (NOT semantic search) */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Filter by text…"
+      {/* Command-menu style structured filter bar (NOT semantic search) */}
+      <div className="gradient-border flex flex-wrap items-center gap-2 rounded-panel bg-white/[0.02] p-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet" />
+          <input
+            placeholder="Filter tasks by text…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="pl-8"
+            className="h-9 w-full rounded-chip border border-white/10 bg-white/[0.03] pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-violet/50"
           />
         </div>
         <select
@@ -184,13 +194,19 @@ export function TaskBoard({
           value={fUrgency}
           onChange={(e) => setFUrgency(e.target.value as TaskUrgency | "")}
         >
-          <option value="">All urgencies</option>
-          {URGENCIES.map((u) => (
+          <option value="">All tiers</option>
+          {URGENCY_ORDER.map((u) => (
             <option key={u} value={u}>
               {URGENCY_LABEL[u]}
             </option>
           ))}
         </select>
+        <span className="hidden items-center gap-1.5 px-2 text-[11px] text-muted-foreground/70 sm:inline-flex">
+          <kbd className="inline-flex items-center gap-0.5 rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">
+            <Command className="h-3 w-3" />K
+          </kbd>
+          opens the Brain
+        </span>
       </div>
 
       {filtered.length === 0 ? (
@@ -203,8 +219,12 @@ export function TaskBoard({
           tasks={filtered}
           goalTitle={goalTitle}
           dragId={dragId}
+          overTier={overTier}
+          reduced={reduced}
           onDragStart={setDragId}
-          onDropColumn={(status) => handleDrop({ status })}
+          onDragEnd={endDrag}
+          onTierOver={setOverTier}
+          onDropTier={(urgency) => handleDrop({ urgency })}
           onPatch={patchTask}
           onDelete={deleteTask}
         />
@@ -213,7 +233,9 @@ export function TaskBoard({
           tasks={filtered}
           goalTitle={goalTitle}
           dragId={dragId}
+          reduced={reduced}
           onDragStart={setDragId}
+          onDragEnd={endDrag}
           onPatch={patchTask}
           onDelete={deleteTask}
           onDropAny={() => handleDrop({})}
@@ -223,7 +245,9 @@ export function TaskBoard({
           tasks={filtered}
           goalTitle={goalTitle}
           dragId={dragId}
+          reduced={reduced}
           onDragStart={setDragId}
+          onDragEnd={endDrag}
           onPatch={patchTask}
           onDelete={deleteTask}
           onDropAny={() => handleDrop({})}
@@ -248,8 +272,10 @@ function ViewBtn({
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 rounded px-2.5 py-1 text-sm transition-colors",
-        active ? "bg-secondary text-secondary-foreground font-medium" : "text-muted-foreground hover:bg-accent"
+        "flex items-center gap-1.5 rounded-chip px-2.5 py-1 text-sm transition-colors",
+        active
+          ? "bg-violet/15 text-foreground font-medium ring-1 ring-violet/30"
+          : "text-muted-foreground hover:bg-white/[0.05]"
       )}
     >
       <Icon className="h-4 w-4" />
@@ -261,59 +287,119 @@ function ViewBtn({
 type CardProps = {
   goalTitle: (id: string | null) => string | undefined;
   dragId: string | null;
+  reduced: boolean;
   onDragStart: (id: string) => void;
+  onDragEnd: () => void;
   onPatch: (id: string, patch: Partial<Task>) => void;
   onDelete: (id: string) => void;
 };
 
+/** A clear, animated drop placeholder shown in the hovered column. */
+function DropPlaceholder({ hex, reduced }: { hex: string; reduced: boolean }) {
+  return (
+    <motion.div
+      layout={reduced ? false : true}
+      initial={reduced ? false : { opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 44 }}
+      exit={reduced ? undefined : { opacity: 0, height: 0 }}
+      transition={{ duration: 0.16 }}
+      className="rounded-panel border-2 border-dashed"
+      style={{ borderColor: `${hex}66`, backgroundColor: `${hex}14` }}
+      aria-hidden
+    />
+  );
+}
+
 function KanbanView({
   tasks,
-  onDropColumn,
+  overTier,
+  onTierOver,
+  onDropTier,
+  reduced,
   ...rest
-}: { tasks: Task[]; onDropColumn: (s: TaskStatus) => void } & CardProps) {
+}: {
+  tasks: Task[];
+  overTier: TaskUrgency | null;
+  onTierOver: (t: TaskUrgency | null) => void;
+  onDropTier: (u: TaskUrgency) => void;
+  reduced: boolean;
+} & CardProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      {STATUSES.map((status) => {
-        const col = tasks.filter((t) => t.status === status);
+    <motion.div
+      variants={reduced ? undefined : bentoContainer}
+      initial={reduced ? false : "hidden"}
+      animate={reduced ? false : "show"}
+      className="-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4"
+    >
+      {URGENCY_ORDER.map((tier) => {
+        const u = URGENCY[tier];
+        const col = tasks.filter((t) => t.urgency === tier);
+        const isOver = overTier === tier;
         return (
           <div
-            key={status}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDropColumn(status)}
-            className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-2"
+            key={tier}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (rest.dragId && overTier !== tier) onTierOver(tier);
+            }}
+            onDrop={() => onDropTier(tier)}
+            className={cn(
+              "flex min-w-[78vw] shrink-0 snap-start flex-col gap-2 rounded-panel border bg-white/[0.015] p-2 transition-colors sm:min-w-0",
+              isOver ? "border-white/20" : "border-white/8"
+            )}
+            style={isOver ? { backgroundColor: `${u.hex}0d` } : undefined}
           >
-            <div className="flex items-center justify-between px-1 text-sm font-medium">
-              <span>{STATUS_LABEL[status]}</span>
-              <span className="text-xs text-muted-foreground">{col.length}</span>
+            {/* Tier header — colored by URGENCY[tier] */}
+            <div className="flex items-center justify-between px-1 py-0.5">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{ color: u.hex }}>
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: u.hex }} />
+                {u.label}
+              </span>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{col.length}</span>
             </div>
+            <div
+              className="h-px w-full"
+              style={{ background: `linear-gradient(90deg, ${u.hex}55, transparent)` }}
+            />
+
+            <AnimatePresence initial={false}>
+              {isOver && rest.dragId && <DropPlaceholder hex={u.hex} reduced={reduced} />}
+            </AnimatePresence>
+
             {col.map((t) => (
               <TaskCard
                 key={t.id}
                 task={t}
                 goalTitle={rest.goalTitle(t.goal_id)}
                 onDragStart={rest.onDragStart}
+                onDragEnd={rest.onDragEnd}
                 onPatch={rest.onPatch}
                 onDelete={rest.onDelete}
                 dragging={rest.dragId === t.id}
               />
             ))}
-            {col.length === 0 && (
-              <p className="px-1 py-3 text-center text-xs text-muted-foreground">Drop here</p>
+
+            {col.length === 0 && !isOver && (
+              <p className="px-1 py-6 text-center text-xs text-muted-foreground/60">Drop here</p>
             )}
           </div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }
 
 function ListView({
   tasks,
   onDropAny,
+  reduced,
   ...rest
-}: { tasks: Task[]; onDropAny: () => void } & CardProps) {
+}: { tasks: Task[]; onDropAny: () => void; reduced: boolean } & CardProps) {
   return (
-    <div
+    <motion.div
+      variants={reduced ? undefined : bentoContainer}
+      initial={reduced ? false : "hidden"}
+      animate={reduced ? false : "show"}
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDropAny}
       className="flex flex-col gap-2"
@@ -324,29 +410,40 @@ function ListView({
           task={t}
           goalTitle={rest.goalTitle(t.goal_id)}
           onDragStart={rest.onDragStart}
+          onDragEnd={rest.onDragEnd}
           onPatch={rest.onPatch}
           onDelete={rest.onDelete}
           dragging={rest.dragId === t.id}
         />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
 function CategoryView({
   tasks,
   onDropAny,
+  reduced,
   ...rest
-}: { tasks: Task[]; onDropAny: () => void } & CardProps) {
-  const groups = CATEGORIES.map((c) => ({ category: c, items: tasks.filter((t) => t.category === c) })).filter(
-    (g) => g.items.length > 0
-  );
+}: { tasks: Task[]; onDropAny: () => void; reduced: boolean } & CardProps) {
+  const groups = CATEGORIES.map((c) => ({
+    category: c,
+    items: tasks.filter((t) => t.category === c),
+  })).filter((g) => g.items.length > 0);
   return (
-    <div className="space-y-4">
+    <motion.div
+      variants={reduced ? undefined : bentoContainer}
+      initial={reduced ? false : "hidden"}
+      animate={reduced ? false : "show"}
+      className="space-y-4"
+    >
       {groups.map((g) => (
         <div key={g.category} onDragOver={(e) => e.preventDefault()} onDrop={onDropAny}>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-            {g.category} <span className="font-normal">· {g.items.length}</span>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">
+            {g.category}{" "}
+            <span className="font-mono text-xs font-normal tabular-nums text-muted-foreground">
+              · {g.items.length}
+            </span>
           </h3>
           <div className="flex flex-col gap-2">
             {g.items.map((t) => (
@@ -355,6 +452,7 @@ function CategoryView({
                 task={t}
                 goalTitle={rest.goalTitle(t.goal_id)}
                 onDragStart={rest.onDragStart}
+                onDragEnd={rest.onDragEnd}
                 onPatch={rest.onPatch}
                 onDelete={rest.onDelete}
                 dragging={rest.dragId === t.id}
@@ -363,6 +461,6 @@ function CategoryView({
           </div>
         </div>
       ))}
-    </div>
+    </motion.div>
   );
 }

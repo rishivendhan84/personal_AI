@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   addDays,
   format,
@@ -8,16 +9,18 @@ import {
   parseISO,
   startOfDay,
 } from "date-fns";
+import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/page";
+import { useReducedMotion, DUR } from "@/lib/motion";
 import type { CalendarEvent } from "@/lib/db/types";
 
 /**
- * Read-only calendar (PRD §7.2): a 14-day horizontal strip that auto-scrolls to
- * today; clicking a day lists that day's events with a current-time marker on
- * today. NON-GOALS: no create/edit. Source is the cached `calendar_events`
- * passed from the server page — this component never fetches AI.
+ * Read-only calendar (PRD §7.2): a 14-day horizontal snap-scroll strip that
+ * auto-scrolls to today; clicking a day expands that day's events below in a
+ * glass sheet, with a gently pulsing now-marker on today. NON-GOALS: no
+ * create/edit. Source is the cached `calendar_events` passed from the server
+ * page — this component never fetches AI. Renders in the browser's local tz.
  */
 export function CalendarStrip({
   events,
@@ -39,7 +42,6 @@ export function CalendarStrip({
     () => window.find((d) => isToday(d)) ?? window[0]
   );
 
-  const stripRef = React.useRef<HTMLDivElement>(null);
   const todayRef = React.useRef<HTMLButtonElement>(null);
 
   // Auto-scroll the strip to bring today into view on mount.
@@ -59,14 +61,14 @@ export function CalendarStrip({
     return map;
   }, [events]);
 
-  const dayEvents = byDay.get(format(selected, "yyyy-MM-dd")) ?? [];
+  const selectedKey = format(selected, "yyyy-MM-dd");
+  const dayEvents = byDay.get(selectedKey) ?? [];
 
   return (
     <div className="space-y-4">
-      {/* 14-day strip */}
+      {/* 14-day snap-scroll strip */}
       <div
-        ref={stripRef}
-        className="flex gap-2 overflow-x-auto pb-1"
+        className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
         aria-label="14-day calendar"
       >
@@ -83,22 +85,45 @@ export function CalendarStrip({
               aria-selected={active}
               onClick={() => setSelected(startOfDay(d))}
               className={cn(
-                "flex min-w-[3.75rem] shrink-0 flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-center transition-colors",
-                active
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card hover:bg-accent hover:text-accent-foreground",
-                today && !active && "border-primary/50"
+                "group relative flex min-w-[4.25rem] shrink-0 snap-start flex-col items-center gap-1 rounded-panel border px-3 py-3 text-center transition-all duration-150",
+                "border-white/[0.06] bg-white/[0.02] backdrop-blur",
+                "hover:border-white/[0.12] hover:bg-white/[0.05]",
+                active && "bg-violet/[0.10] shadow-glow-violet",
+                today && "ring-1 ring-inset ring-violet/70"
               )}
             >
-              <span className="text-[10px] uppercase opacity-70">{format(d, "EEE")}</span>
-              <span className="text-lg font-semibold leading-none tabular-nums">
-                {format(d, "d")}
-              </span>
-              <span className="text-[10px] opacity-70">{format(d, "MMM")}</span>
               <span
                 className={cn(
-                  "mt-0.5 h-1.5 w-1.5 rounded-full",
-                  count > 0 ? (active ? "bg-primary-foreground" : "bg-primary") : "bg-transparent"
+                  "font-mono text-[10px] uppercase tracking-wider tabular-nums",
+                  active ? "text-violet" : "text-muted-foreground/70"
+                )}
+              >
+                {format(d, "EEE")}
+              </span>
+              <span
+                className={cn(
+                  "font-mono text-2xl font-semibold leading-none tabular-nums",
+                  active ? "text-foreground" : "text-foreground/90"
+                )}
+              >
+                {format(d, "d")}
+              </span>
+              <span
+                className={cn(
+                  "font-mono text-[10px] uppercase tracking-wide tabular-nums",
+                  active ? "text-violet/80" : "text-muted-foreground/50"
+                )}
+              >
+                {format(d, "MMM")}
+              </span>
+              <span
+                className={cn(
+                  "mt-1 h-1.5 w-1.5 rounded-full transition-colors",
+                  count > 0
+                    ? active
+                      ? "bg-violet shadow-[0_0_8px_rgba(124,92,252,0.8)]"
+                      : "bg-violet/60"
+                    : "bg-transparent"
                 )}
                 aria-hidden
               />
@@ -107,21 +132,58 @@ export function CalendarStrip({
         })}
       </div>
 
-      {/* Day detail */}
-      <Card className="p-4">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold">
-            {format(selected, "EEEE, MMMM d")}
-            {isToday(selected) && (
-              <span className="ml-2 text-xs font-normal text-primary">Today</span>
-            )}
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            {dayEvents.length} {dayEvents.length === 1 ? "event" : "events"}
-          </span>
-        </div>
-        <DayDetail events={dayEvents} isToday={isToday(selected)} />
-      </Card>
+      {/* Day detail — glass sheet, expands on day change */}
+      <DaySheet
+        dayKey={selectedKey}
+        selected={selected}
+        events={dayEvents}
+        isToday={isToday(selected)}
+      />
+    </div>
+  );
+}
+
+/** Glass sheet that expands (height/opacity) when the selected day changes. */
+function DaySheet({
+  dayKey,
+  selected,
+  events,
+  isToday: today,
+}: {
+  dayKey: string;
+  selected: Date;
+  events: CalendarEvent[];
+  isToday: boolean;
+}) {
+  const reduced = useReducedMotion();
+  return (
+    <div className="glass gradient-border overflow-hidden rounded-card shadow-card">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={dayKey}
+          initial={reduced ? { opacity: 0 } : { height: 0, opacity: 0 }}
+          animate={reduced ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+          exit={reduced ? { opacity: 0 } : { height: 0, opacity: 0 }}
+          transition={{ duration: DUR.base, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="p-5">
+            <div className="mb-4 flex items-baseline justify-between gap-3">
+              <h2 className="font-mono text-sm font-semibold tabular-nums text-foreground">
+                {format(selected, "EEEE, MMM d")}
+                {today && (
+                  <span className="ml-2 rounded-chip bg-violet/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-violet">
+                    Today
+                  </span>
+                )}
+              </h2>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground/70">
+                {events.length} {events.length === 1 ? "event" : "events"}
+              </span>
+            </div>
+            <DayDetail events={events} isToday={today} />
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -150,15 +212,18 @@ function DayDetail({ events, isToday: today }: { events: CalendarEvent[]; isToda
       {events.map((e, i) => (
         <React.Fragment key={e.id}>
           {markerIndex === i && <NowMarker now={now!} />}
-          <li className="flex items-baseline gap-3 rounded-md border border-border/60 p-2.5">
-            <span className="w-28 shrink-0 text-xs tabular-nums text-muted-foreground">
+          <li className="flex items-baseline gap-3 rounded-panel border border-white/[0.06] bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.04]">
+            <span className="w-28 shrink-0 font-mono text-xs tabular-nums text-muted-foreground/80">
               {format(parseISO(e.start_at), "p")}
               {e.end_at ? ` – ${format(parseISO(e.end_at), "p")}` : ""}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{e.title}</p>
+              <p className="truncate text-sm font-medium text-foreground">{e.title}</p>
               {e.location && (
-                <p className="truncate text-xs text-muted-foreground">{e.location}</p>
+                <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-chip bg-white/[0.04] px-2 py-0.5 text-[11px] text-muted-foreground/80">
+                  <MapPin className="h-3 w-3 shrink-0 text-cyan" />
+                  <span className="truncate">{e.location}</span>
+                </span>
               )}
             </div>
           </li>
@@ -170,14 +235,15 @@ function DayDetail({ events, isToday: today }: { events: CalendarEvent[]; isToda
   );
 }
 
+/** Gently pulsing current-time marker (the one allowed ambient loop). */
 function NowMarker({ now }: { now: Date }) {
   return (
-    <li className="flex items-center gap-2" aria-label="current time">
-      <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />
-      <span className="text-[10px] font-medium uppercase tracking-wide text-destructive">
+    <li className="flex items-center gap-2 py-0.5 animate-pulse-now" aria-label="current time">
+      <span className="h-2 w-2 shrink-0 rounded-full bg-violet shadow-[0_0_10px_rgba(124,92,252,0.9)]" />
+      <span className="font-mono text-[10px] font-medium uppercase tracking-wide tabular-nums text-violet">
         Now · {format(now, "p")}
       </span>
-      <span className="h-px flex-1 bg-destructive/40" />
+      <span className="h-px flex-1 bg-gradient-to-r from-violet/60 to-transparent" />
     </li>
   );
 }

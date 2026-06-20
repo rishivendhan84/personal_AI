@@ -2,12 +2,12 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
 
 /**
- * Empty-state action: POSTs to /api/cron/brief (built by another agent) to
- * assemble + persist today's brief, then refreshes so the dashboard reads the
- * new cache. The ONLY place the dashboard triggers generation — never on load.
+ * Empty-state action: POSTs to /api/cron/brief to assemble + persist today's
+ * brief, then refreshes so the dashboard reads the new cache. The ONLY place the
+ * dashboard triggers generation — never on load. Restyled as a ShimmerButton.
  */
 export function GenerateBriefButton() {
   const router = useRouter();
@@ -30,11 +30,15 @@ export function GenerateBriefButton() {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <Button onClick={generate} disabled={loading}>
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+      <ShimmerButton onClick={generate} loading={loading}>
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Sparkles className="h-4 w-4 text-violet" />
+        )}
         {loading ? "Generating…" : "Generate brief"}
-      </Button>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      </ShimmerButton>
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

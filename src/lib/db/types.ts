@@ -148,3 +148,31 @@ export interface CalendarEvent {
   location: string | null;
   synced_at: string;
 }
+
+// Nutrition — AI estimates per-meal macros; daily totals are summed in code.
+export interface NutritionLog {
+  id: string;
+  log_date: string;
+  meal: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  source: "manual" | "telegram";
+  created_at: string;
+}
+
+export interface NutritionTargets {
+  id: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}
+
+export interface MacroTotals {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+}

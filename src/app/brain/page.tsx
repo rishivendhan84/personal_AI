@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/db/server";
-import { PageHeader, SetupHint } from "@/components/ui/page";
+import { SetupHint } from "@/components/ui/page";
 import { BrainSearch } from "@/components/brain/BrainSearch";
 
 /**
@@ -10,15 +10,16 @@ import { BrainSearch } from "@/components/brain/BrainSearch";
 export default function BrainPage() {
   const configured = getAdminClient() !== null;
 
-  return (
-    <div>
-      <PageHeader
-        title="Brain"
-        description="Ask anything. The Brain routes your question to your tasks, goals, and memories — and answers with citations."
-      />
-      {configured ? (
-        <BrainSearch />
-      ) : (
+  if (!configured) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Brain</h1>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+            Ask anything. The Brain routes your question to your tasks, goals, and
+            memories — and answers with citations.
+          </p>
+        </div>
         <SetupHint
           what="Brain"
           vars={[
@@ -27,7 +28,9 @@ export default function BrainPage() {
             "GEMINI_API_KEY",
           ]}
         />
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  return <BrainSearch />;
 }
