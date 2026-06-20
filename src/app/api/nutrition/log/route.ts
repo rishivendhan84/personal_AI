@@ -72,3 +72,22 @@ export const POST = route(async (req: Request) => {
     return ok({ skipped: true, estimate: macros });
   }
 });
+
+/**
+ * DELETE /api/nutrition/log?id=<uuid> — remove a meal. Server-side so it works
+ * under locked-down RLS (the browser never touches the DB directly).
+ */
+export const DELETE = route(async (req: Request) => {
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) return fail("id is required", 400);
+  const db = getAdminClient();
+  if (!db) return ok({ skipped: true });
+  try {
+    const { error } = await db.from("nutrition_logs").delete().eq("id", id);
+    if (error) throw error;
+    return ok({ deleted: id });
+  } catch (e) {
+    console.warn("[PAIOS:nutrition] delete degraded:", e);
+    return ok({ skipped: true });
+  }
+});

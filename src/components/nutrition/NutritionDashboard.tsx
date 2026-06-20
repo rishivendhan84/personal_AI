@@ -4,7 +4,6 @@ import { AnimatePresence } from "framer-motion";
 import { Utensils } from "lucide-react";
 import { BentoCard, BentoHeader } from "@/components/ui/bento-card";
 import { EmptyState } from "@/components/ui/page";
-import { getBrowserClient } from "@/lib/db/browser";
 import { MacroRing } from "@/components/nutrition/MacroRing";
 import { CalorieTotal } from "@/components/nutrition/CalorieTotal";
 import { MealInput } from "@/components/nutrition/MealInput";
@@ -67,12 +66,13 @@ export function NutritionDashboard({ initial }: { initial: NutritionView }) {
     [refetch]
   );
 
-  // Delete a row (browser client; degrades to no-op if unconfigured).
+  // Delete a row via the server route (works under locked-down RLS — the
+  // browser never touches the DB directly).
   const removeRow = React.useCallback(async (id: string) => {
-    const db = getBrowserClient();
-    if (!db) return;
     try {
-      await db.from("nutrition_logs").delete().eq("id", id);
+      await fetch(`/api/nutrition/log?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
     } catch {
       /* ignore — refetch reconciles */
     }
