@@ -176,3 +176,13 @@ export interface MacroTotals {
   carbs_g: number;
   fat_g: number;
 }
+
+// Focus / Pomodoro session, logged on each completed focus phase.
+export interface FocusSession {
+  id: string;
+  mode: "quick" | "deep" | "learning";
+  minutes: number;
+  task_id: string | null;
+  task_title: string | null;
+  completed_at: string;
+}

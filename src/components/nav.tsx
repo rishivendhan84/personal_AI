@@ -10,21 +10,47 @@ import {
   Wallet,
   Brain,
   Utensils,
+  Hourglass,
   Command as CommandIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useFocus } from "@/components/focus/FocusProvider";
+import { fmtClock, MODES } from "@/lib/focus";
 
 const links = [
   { href: "/", label: "Operator", icon: LayoutDashboard },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/habits", label: "Habits", icon: CheckCircle2 },
+  { href: "/focus", label: "Focus", icon: Hourglass },
   { href: "/nutrition", label: "Nutrition", icon: Utensils },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/finance", label: "Finance", icon: Wallet },
   { href: "/brain", label: "Brain", icon: Brain },
 ];
+
+/** Live countdown chip — shows whenever a focus/break session is in progress. */
+function FocusChip() {
+  const f = useFocus();
+  if (f.phase === "idle") return null;
+  const accent = f.phase === "break" ? "#34D399" : MODES[f.mode].accent;
+  return (
+    <Link
+      href="/focus"
+      aria-label="Focus session in progress"
+      className="flex shrink-0 items-center gap-1.5 rounded-chip border border-foreground/10 bg-foreground/[0.03] px-2 py-1.5 transition-colors hover:bg-foreground/[0.06]"
+    >
+      <Hourglass
+        className={cn("h-3.5 w-3.5", f.running && "animate-pulse")}
+        style={{ color: accent }}
+      />
+      <span className="font-mono text-xs tabular-nums text-foreground">
+        {fmtClock(f.remainingMs)}
+      </span>
+    </Link>
+  );
+}
 
 export function Nav() {
   const pathname = usePathname();
@@ -61,6 +87,7 @@ export function Nav() {
           })}
         </div>
 
+        <FocusChip />
         <button
           onClick={() => window.dispatchEvent(new Event("paios:cmdk"))}
           className="hidden items-center gap-2 rounded-chip border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground sm:flex"

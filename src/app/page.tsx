@@ -25,6 +25,7 @@ import {
 } from "@/components/dashboard/BentoTiles";
 import { HabitsTile, type DashHabit } from "@/components/dashboard/HabitsTile";
 import { NutritionTile } from "@/components/dashboard/NutritionTile";
+import { FocusTile } from "@/components/dashboard/FocusTile";
 import { QuickAddTask } from "@/components/dashboard/QuickAddTask";
 import { GenerateBriefButton } from "@/components/dashboard/GenerateBriefButton";
 import { BentoCard } from "@/components/ui/bento-card";
@@ -128,6 +129,7 @@ export default async function DashboardPage() {
           </BentoCard>
           <TasksTile counts={taskCounts} tasks={topTasks} />
           <HabitsTile habits={habits} bestStreak={bestStreak} />
+          <FocusTile />
           <CalendarTile calendar={[]} timeZone={tz} />
           <GoalsTile goals={goals} />
           <FinanceTile netWorth={netWorth} />
@@ -157,6 +159,7 @@ export default async function DashboardPage() {
         />
         <TasksTile counts={taskCounts} tasks={topTasks} />
         <HabitsTile habits={habits} bestStreak={bestStreak} />
+        <FocusTile />
         <CalendarTile calendar={c.calendar} timeZone={tz} />
         <GoalsTile goals={goals} />
         <FinanceTile netWorth={netWorth} />

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Nav } from "@/components/nav";
 import { Aurora } from "@/components/ui/aurora";
 import { CommandPalette } from "@/components/command-palette";
+import { FocusProvider } from "@/components/focus/FocusProvider";
 
 // Editorial serif — used only for the Operator greeting headline.
 const instrumentSerif = Instrument_Serif({
@@ -36,16 +37,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="grain relative min-h-screen antialiased">
         <ThemeProvider>
-          {/* Single, very subtle app-wide background effect (behind everything). */}
-          <Aurora />
-          <div className="relative z-10">
-            <Nav />
-            <main className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 sm:py-8">
-              {children}
-            </main>
-          </div>
-          {/* ⌘K command palette — also the Brain search entry point. */}
-          <CommandPalette />
+          <FocusProvider>
+            {/* Single, very subtle app-wide background effect (behind everything). */}
+            <Aurora />
+            <div className="relative z-10">
+              <Nav />
+              <main className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 sm:py-8">
+                {children}
+              </main>
+            </div>
+            {/* ⌘K command palette — also the Brain search entry point. */}
+            <CommandPalette />
+          </FocusProvider>
         </ThemeProvider>
       </body>
     </html>
