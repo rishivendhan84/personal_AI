@@ -116,13 +116,21 @@ export function BrainSearch() {
             variants={bentoItem}
             className="space-y-5"
           >
-            <AnswerCard answer={result.answer} route={result.route} />
-            {result.sources.length > 0 ? (
-              <SourceList sources={result.sources} />
+            {/* Honest rendering: distinguish a real answer, no-model, and no-data. */}
+            {result.answer !== null ? (
+              <>
+                <AnswerCard answer={result.answer} route={result.route} llm={result.llm} />
+                {result.sources.length > 0 && <SourceList sources={result.sources} />}
+              </>
+            ) : !result.llm || result.sources.length > 0 ? (
+              <>
+                <AnswerCard answer={null} route={result.route} llm={result.llm} />
+                {result.sources.length > 0 && <SourceList sources={result.sources} />}
+              </>
             ) : (
               <p className="text-center text-sm text-muted-foreground">
-                No matching sources. Try rephrasing, or capture more notes and
-                tasks first.
+                No matching sources yet — add a few tasks, goals, or notes and ask
+                again. (Try the dashboard quick-add, or capture via Telegram.)
               </p>
             )}
           </motion.div>

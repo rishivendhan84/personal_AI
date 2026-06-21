@@ -51,9 +51,12 @@ function renderWithCitations(text: string) {
 export function AnswerCard({
   answer,
   route,
+  llm = true,
 }: {
   answer: string | null;
   route: BrainRoute;
+  /** Whether an LLM is configured — drives an honest no-answer message. */
+  llm?: boolean;
 }) {
   if (answer === null) {
     return (
@@ -65,7 +68,9 @@ export function AnswerCard({
           <RouteBadge route={route} />
         </div>
         <p className="text-sm text-muted-foreground">
-          AI answers are off (no model configured) — showing matched sources below.
+          {llm
+            ? "Couldn't compose an answer — showing the closest matches below."
+            : "AI answers are off: no model key (GEMINI_API_KEY / GROQ_API_KEY) is reaching the server. Showing matched sources below."}
         </p>
       </BentoCard>
     );

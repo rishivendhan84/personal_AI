@@ -22,9 +22,10 @@ export interface Source {
 }
 
 export interface BrainResult {
-  answer: string | null; // null when LLM unavailable (search-only degradation)
+  answer: string | null; // null when LLM unavailable OR no sources matched
   sources: Source[];
   route: BrainRoute;
+  llm: boolean; // whether an LLM is actually configured (so the UI can be honest)
 }
 
 // --- Routing heuristics ---------------------------------------------------
@@ -88,11 +89,14 @@ function subjectTerm(q: string): string {
   const stripped = q
     .toLowerCase()
     .replace(
-      /\b(task|tasks|todo|to-do|open|due|overdue|this week|this month|today|goal|goals|habit|habits|status|doing|done|complete|completed|finished|outstanding|remaining|still|pending|urgent|deadline|show me|what are|which|my)\b/g,
+      /\b(task|tasks|todo|to-do|open|due|overdue|this week|this month|today|goal|goals|habit|habits|status|doing|done|complete|completed|finished|outstanding|remaining|still|pending|urgent|deadline|show me|show|list|what are|what is|whats|what's|which|my|me|the|all|any|current|get|give|find|tell)\b/g,
       " "
     )
     .replace(/\s+/g, " ")
     .trim();
+  // Generic listing query ("list my current tasks") → no subject left → return
+  // the raw query so the caller's `term !== query` guard skips the ilike filter
+  // and lists everything matching the status/urgency filters instead.
   return stripped.length >= 2 ? stripped : q.trim();
 }
 
@@ -218,15 +222,17 @@ function buildPrompt(q: string, sources: Source[]): string {
  */
 export async function answer(q: string): Promise<BrainResult> {
   const route = routeQuery(q);
+  const llm = aiAvailable.llm();
 
   const tasks: Promise<Source[]>[] = [];
   if (route === "structured" || route === "mixed") tasks.push(structuredSearch(q));
   if (route === "vector" || route === "mixed") tasks.push(vectorSearch(q));
   const sources = (await Promise.all(tasks)).flat();
 
-  if (!aiAvailable.llm() || sources.length === 0) {
-    // Graceful degradation: hand back the matches and let the UI list them.
-    return { answer: null, sources, route };
+  if (!llm || sources.length === 0) {
+    // No model, or nothing matched — hand back the matches and let the UI show
+    // the *accurate* reason (no model vs no data) using the `llm` flag.
+    return { answer: null, sources, route, llm };
   }
 
   try {
@@ -235,10 +241,10 @@ export async function answer(q: string): Promise<BrainResult> {
       prompt: buildPrompt(q, sources),
       maxTokens: 700,
     });
-    return { answer: text.trim(), sources, route };
+    return { answer: text.trim(), sources, route, llm };
   } catch (e) {
     // A model/network error shouldn't 500 the Brain — fall back to sources.
     console.warn("[PAIOS:brain] reason() failed, returning sources only:", e);
-    return { answer: null, sources, route };
+    return { answer: null, sources, route, llm };
   }
 }
