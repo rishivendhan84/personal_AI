@@ -48,37 +48,53 @@ export function transcribe(audio: Buffer, mimeType: string): Promise<string> {
   return failover("stt", primary, fallback, (p) => p.transcribe(audio, mimeType));
 }
 
-// --- LLM classify: cheapest model, Groq/Gemini primary, OpenAI fallback ---
-function llmPrimary(): LlmProvider | null {
+// --- LLM provider chain: try the preferred provider, then EVERY other
+// configured one (Gemini → Groq → OpenAI). This is why a broken/disabled
+// Gemini still answers via Groq instead of failing the whole request. ---
+function llmChain(): LlmProvider[] {
   const choice = env("AI_LLM_PRIMARY") ?? "gemini";
-  if (choice === "groq" && configured.groq()) return groqLlm;
-  if (configured.gemini()) return geminiLlm;
-  if (configured.groq()) return groqLlm;
-  return null;
+  const entries: { name: string; provider: LlmProvider; ok: boolean }[] = [
+    { name: "gemini", provider: geminiLlm, ok: configured.gemini() },
+    { name: "groq", provider: groqLlm, ok: configured.groq() },
+    { name: "openai", provider: openaiLlm, ok: configured.openai() },
+  ];
+  const enabled = entries.filter((e) => e.ok);
+  // Preferred provider first; the rest keep their natural order.
+  enabled.sort((a, b) => Number(b.name === choice) - Number(a.name === choice));
+  return enabled.map((e) => e.provider);
+}
+
+/** Try each provider in order until one succeeds; throw only if all fail. */
+async function tryChain<R>(
+  label: string,
+  providers: LlmProvider[],
+  run: (p: LlmProvider) => Promise<R>
+): Promise<R> {
+  if (providers.length === 0) throw new Error(`[PAIOS:ai] ${label}: no provider configured.`);
+  let lastErr: unknown;
+  for (const p of providers) {
+    try {
+      return await withTimeout(run(p));
+    } catch (e) {
+      lastErr = e;
+      console.warn(`[PAIOS:ai] ${label} via ${p.name} failed, trying next:`, e);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(`[PAIOS:ai] ${label}: all providers failed`);
 }
 
 export function classify(text: string) {
-  return failover(
-    "classify",
-    llmPrimary(),
-    configured.openai() ? openaiLlm : null,
-    (p) => p.classify(text)
-  );
+  return tryChain("classify", llmChain(), (p) => p.classify(text));
 }
 
-// --- LLM reason (brief / Brain): mid-tier primary, OpenAI fallback ---
+// --- LLM reason (brief / Brain): preferred model, then every configured one ---
 export function reason(opts: {
   system?: string;
   prompt: string;
   json?: boolean;
   maxTokens?: number;
 }): Promise<string> {
-  return failover(
-    "reason",
-    llmPrimary(),
-    configured.openai() ? openaiLlm : null,
-    (p) => p.complete(opts)
-  );
+  return tryChain("reason", llmChain(), (p) => p.complete(opts));
 }
 
 // --- Embeddings: canonical Gemini (768d). OpenAI differs in dimension; see §10 ---
