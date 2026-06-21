@@ -86,8 +86,8 @@ export function CalendarStrip({
               onClick={() => setSelected(startOfDay(d))}
               className={cn(
                 "group relative flex min-w-[4.25rem] shrink-0 snap-start flex-col items-center gap-1 rounded-panel border px-3 py-3 text-center transition-all duration-150",
-                "border-white/[0.06] bg-white/[0.02] backdrop-blur",
-                "hover:border-white/[0.12] hover:bg-white/[0.05]",
+                "border-foreground/[0.06] bg-foreground/[0.02] backdrop-blur",
+                "hover:border-foreground/[0.12] hover:bg-foreground/[0.05]",
                 active && "bg-violet/[0.10] shadow-glow-violet",
                 today && "ring-1 ring-inset ring-violet/70"
               )}
@@ -212,7 +212,7 @@ function DayDetail({ events, isToday: today }: { events: CalendarEvent[]; isToda
       {events.map((e, i) => (
         <React.Fragment key={e.id}>
           {markerIndex === i && <NowMarker now={now!} />}
-          <li className="flex items-baseline gap-3 rounded-panel border border-white/[0.06] bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.04]">
+          <li className="flex items-baseline gap-3 rounded-panel border border-foreground/[0.06] bg-foreground/[0.02] p-3 transition-colors hover:bg-foreground/[0.04]">
             <span className="w-28 shrink-0 font-mono text-xs tabular-nums text-muted-foreground/80">
               {format(parseISO(e.start_at), "p")}
               {e.end_at ? ` – ${format(parseISO(e.end_at), "p")}` : ""}
@@ -220,7 +220,7 @@ function DayDetail({ events, isToday: today }: { events: CalendarEvent[]; isToda
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{e.title}</p>
               {e.location && (
-                <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-chip bg-white/[0.04] px-2 py-0.5 text-[11px] text-muted-foreground/80">
+                <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-chip bg-foreground/[0.04] px-2 py-0.5 text-[11px] text-muted-foreground/80">
                   <MapPin className="h-3 w-3 shrink-0 text-cyan" />
                   <span className="truncate">{e.location}</span>
                 </span>

@@ -32,7 +32,7 @@ function LoadingState() {
         {["w-full", "w-11/12", "w-4/5", "w-2/3"].map((w, i) => (
           <div
             key={i}
-            className={`relative h-3.5 overflow-hidden rounded-chip bg-white/5 ${w}`}
+            className={`relative h-3.5 overflow-hidden rounded-chip bg-foreground/5 ${w}`}
           >
             <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </div>

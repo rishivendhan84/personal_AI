@@ -53,7 +53,7 @@ export function HabitToggle({
         aria-hidden
         className={cn(
           "absolute inset-0 rounded-full border-2 transition-colors duration-200",
-          done ? "border-violet" : "border-white/15 group-hover/toggle:border-violet/50"
+          done ? "border-violet" : "border-foreground/15 group-hover/toggle:border-violet/50"
         )}
       />
 

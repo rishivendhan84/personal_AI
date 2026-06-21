@@ -77,14 +77,14 @@ export function MealRow({
                 onClick={() => void save()}
                 disabled={busy}
                 aria-label="Save macros"
-                className="rounded-md p-1.5 text-positive transition-colors hover:bg-white/[0.06] disabled:opacity-50"
+                className="rounded-md p-1.5 text-positive transition-colors hover:bg-foreground/[0.06] disabled:opacity-50"
               >
                 <Check className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setEditing(false)}
                 aria-label="Cancel edit"
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/[0.06]"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.06]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -95,7 +95,7 @@ export function MealRow({
                 onClick={startEdit}
                 disabled={busy}
                 aria-label="Edit macros"
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground disabled:opacity-50"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground disabled:opacity-50"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
@@ -103,7 +103,7 @@ export function MealRow({
                 onClick={() => void onDelete(log.id)}
                 disabled={busy}
                 aria-label="Delete meal"
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-danger disabled:opacity-50"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-danger disabled:opacity-50"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -117,7 +117,7 @@ export function MealRow({
           editing ? (
             <label
               key={f.key}
-              className="flex items-center gap-1 rounded-chip border border-white/10 bg-white/[0.04] px-2 py-1"
+              className="flex items-center gap-1 rounded-chip border border-foreground/10 bg-foreground/[0.04] px-2 py-1"
             >
               <span className={cn("text-[10px] font-medium", f.color)}>{f.label}</span>
               <input
@@ -134,7 +134,7 @@ export function MealRow({
           ) : (
             <span
               key={f.key}
-              className="inline-flex items-center gap-1 rounded-chip border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-xs tabular-nums"
+              className="inline-flex items-center gap-1 rounded-chip border border-foreground/10 bg-foreground/[0.04] px-2 py-1 font-mono text-xs tabular-nums"
             >
               <span className={cn("font-medium", f.color)}>{f.label}</span>
               <span className="text-foreground">

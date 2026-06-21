@@ -29,7 +29,7 @@ const links = [
 export function Nav() {
   const pathname = usePathname();
   return (
-    <nav className="sticky top-0 z-30 border-b border-white/5 bg-[#09090B]/70 backdrop-blur-xl">
+    <nav className="sticky top-0 z-30 border-b border-foreground/5 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:px-6">
         <Link href="/" className="mr-1 flex items-center gap-2 font-semibold tracking-tight">
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-chip bg-gradient-to-br from-violet to-cyan text-[11px] font-bold text-white shadow-glow-violet">
@@ -50,8 +50,8 @@ export function Nav() {
                 className={cn(
                   "flex items-center gap-1.5 whitespace-nowrap rounded-chip px-2.5 py-1.5 text-sm transition-colors",
                   active
-                    ? "bg-white/[0.06] text-foreground"
-                    : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                    ? "bg-foreground/[0.06] text-foreground"
+                    : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
                 )}
               >
                 <Icon className={cn("h-4 w-4", active && "text-violet")} />
@@ -63,12 +63,12 @@ export function Nav() {
 
         <button
           onClick={() => window.dispatchEvent(new Event("paios:cmdk"))}
-          className="hidden items-center gap-2 rounded-chip border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground sm:flex"
+          className="hidden items-center gap-2 rounded-chip border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground sm:flex"
           aria-label="Open command palette"
         >
           <CommandIcon className="h-3.5 w-3.5" />
           <span>Search</span>
-          <kbd className="rounded bg-white/5 px-1 py-0.5 text-[10px]">Ctrl K</kbd>
+          <kbd className="rounded bg-foreground/5 px-1 py-0.5 text-[10px]">Ctrl K</kbd>
         </button>
         <ThemeToggle />
       </div>

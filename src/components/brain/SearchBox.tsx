@@ -73,7 +73,7 @@ export function SearchBox({
               "flex h-9 shrink-0 items-center gap-1.5 rounded-chip px-3 text-sm font-medium transition-colors duration-150",
               canSubmit
                 ? "bg-violet text-white hover:bg-violet-hover"
-                : "cursor-not-allowed bg-white/5 text-muted-foreground"
+                : "cursor-not-allowed bg-foreground/5 text-muted-foreground"
             )}
           >
             {loading ? (
@@ -90,7 +90,7 @@ export function SearchBox({
 
       <p className="mt-3 text-center text-xs text-muted-foreground">
         Press{" "}
-        <kbd className="rounded-chip border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[0.7rem] tabular-nums text-foreground">
+        <kbd className="rounded-chip border border-foreground/10 bg-foreground/5 px-1.5 py-0.5 font-mono text-[0.7rem] tabular-nums text-foreground">
           Ctrl K
         </kbd>{" "}
         anywhere for quick Brain access.

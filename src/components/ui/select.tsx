@@ -100,7 +100,7 @@ export function Select({
         onClick={() => !disabled && setOpen((o) => !o)}
         onKeyDown={onKeyDown}
         className={cn(
-          "flex h-9 w-full items-center justify-between gap-2 rounded-chip border border-white/10 bg-white/[0.03] px-3 text-sm outline-none transition-colors hover:bg-white/[0.06] focus-visible:border-violet/60 focus-visible:ring-1 focus-visible:ring-violet/40 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-9 w-full items-center justify-between gap-2 rounded-chip border border-foreground/10 bg-foreground/[0.03] px-3 text-sm outline-none transition-colors hover:bg-foreground/[0.06] focus-visible:border-violet/60 focus-visible:ring-1 focus-visible:ring-violet/40 disabled:cursor-not-allowed disabled:opacity-50",
           selected ? "text-foreground" : "text-muted-foreground"
         )}
       >
@@ -121,7 +121,7 @@ export function Select({
             animate={{ opacity: 1, y: 0 }}
             exit={reduced ? undefined : { opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute z-50 mt-1.5 max-h-60 w-full min-w-[8rem] overflow-auto rounded-panel border border-white/10 bg-[#141416]/95 p-1 shadow-glow-violet backdrop-blur-xl"
+            className="absolute z-50 mt-1.5 max-h-60 w-full min-w-[8rem] overflow-auto rounded-panel border border-foreground/10 bg-card/95 p-1 shadow-glow-violet backdrop-blur-xl"
           >
             {options.map((o, i) => {
               const isSelected = o.value === value;

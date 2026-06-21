@@ -79,8 +79,8 @@ export function HabitsTile({
                   color="#7C5CFC"
                   onClick={() => toggle(h)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-panel border border-white/5 bg-white/[0.02] px-3 py-2.5 text-left transition-colors",
-                    "hover:bg-white/[0.05] active:bg-white/[0.07]",
+                    "flex w-full items-center gap-3 rounded-panel border border-foreground/5 bg-foreground/[0.02] px-3 py-2.5 text-left transition-colors",
+                    "hover:bg-foreground/[0.05] active:bg-foreground/[0.07]",
                     h.done && "border-positive/20 bg-positive/[0.06]"
                   )}
                 >
@@ -90,7 +90,7 @@ export function HabitsTile({
                         "absolute inset-0 rounded-full border transition-colors",
                         h.done
                           ? "border-positive bg-positive shadow-[0_0_10px_rgba(74,222,128,0.5)]"
-                          : "border-white/20 bg-white/[0.03]"
+                          : "border-foreground/20 bg-foreground/[0.03]"
                       )}
                     />
                     {h.done && (
@@ -181,7 +181,7 @@ export function HeroHabitChips({ habits: initial }: { habits: DashHabit[] }) {
             "inline-flex min-h-[34px] items-center gap-1.5 rounded-chip border px-2.5 py-1 text-xs transition-colors",
             h.done
               ? "border-positive/30 bg-positive/10 text-foreground"
-              : "border-white/10 bg-white/[0.03] text-muted-foreground hover:bg-white/[0.06]"
+              : "border-foreground/10 bg-foreground/[0.03] text-muted-foreground hover:bg-foreground/[0.06]"
           )}
         >
           <motion.span
@@ -193,7 +193,7 @@ export function HeroHabitChips({ habits: initial }: { habits: DashHabit[] }) {
               "h-3 w-3 shrink-0 rounded-full",
               h.done
                 ? "bg-positive shadow-[0_0_8px_rgba(74,222,128,0.5)]"
-                : "border border-white/20 bg-white/[0.03]"
+                : "border border-foreground/20 bg-foreground/[0.03]"
             )}
           />
           <span className="max-w-[8rem] truncate">{h.name}</span>

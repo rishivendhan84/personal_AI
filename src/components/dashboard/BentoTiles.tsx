@@ -187,7 +187,7 @@ export function GoalsTile({ goals }: { goals: DailyBriefContent["goal_progress"]
                   {g.pct}%
                 </span>
               </div>
-              <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
                 <div
                   className="h-full rounded-full bg-violet"
                   style={{ width: `${Math.min(100, Math.max(0, g.pct))}%` }}

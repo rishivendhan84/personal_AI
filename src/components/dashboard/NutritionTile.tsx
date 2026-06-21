@@ -73,7 +73,7 @@ export function NutritionTile({
             </span>
           </div>
           {pct !== null && (
-            <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
               <div className="h-full rounded-full bg-cyan" style={{ width: `${pct}%` }} />
             </div>
           )}

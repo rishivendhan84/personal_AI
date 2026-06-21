@@ -144,7 +144,7 @@ export function OperatorHero({
           </div>
 
           {/* Hero stats — count up once on load */}
-          <div className="flex items-center gap-6 border-t border-white/5 pt-4">
+          <div className="flex items-center gap-6 border-t border-foreground/5 pt-4">
             <Stat
               icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
               label="Done today"
@@ -204,7 +204,7 @@ function Top3Row({ task, index }: { task: Top3Item; index: number }) {
       animate={done ? { opacity: 0.55 } : { opacity: 1 }}
       exit={reduced ? undefined : { opacity: 0, height: 0, marginTop: 0 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex items-start gap-3 overflow-hidden rounded-panel border border-white/5 bg-white/[0.02] py-2.5 pl-4 pr-3"
+      className="relative flex items-start gap-3 overflow-hidden rounded-panel border border-foreground/5 bg-foreground/[0.02] py-2.5 pl-4 pr-3"
     >
       <span
         aria-hidden
@@ -220,7 +220,7 @@ function Top3Row({ task, index }: { task: Top3Item; index: number }) {
           "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors",
           done
             ? "border-positive bg-positive shadow-[0_0_10px_rgba(74,222,128,0.5)]"
-            : "border-white/20 bg-white/[0.03] hover:border-positive/60 hover:bg-positive/10"
+            : "border-foreground/20 bg-foreground/[0.03] hover:border-positive/60 hover:bg-positive/10"
         )}
       >
         {busy && !done ? (

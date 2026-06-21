@@ -46,7 +46,7 @@ export function CalorieTotal({
       </div>
 
       {/* progress bar — fills on change only */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
         <motion.div
           className={cn("h-full rounded-full", over ? "bg-caution" : "bg-violet")}
           initial={false}

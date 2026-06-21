@@ -27,7 +27,7 @@ export function ProgressBar({
         </span>
         <span className="font-mono tabular-nums font-medium text-foreground">{pct}%</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-violet to-cyan"
           initial={reduced ? false : { width: 0 }}

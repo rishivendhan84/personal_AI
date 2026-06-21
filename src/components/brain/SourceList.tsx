@@ -49,7 +49,7 @@ export function SourceList({ sources }: { sources: Source[] }) {
                   <span className="truncate font-medium text-foreground">
                     {s.title ?? s.snippet.slice(0, 60)}
                   </span>
-                  <span className="ml-auto shrink-0 rounded-chip border border-white/10 bg-white/5 px-2 py-0.5 text-[0.7rem] capitalize text-muted-foreground">
+                  <span className="ml-auto shrink-0 rounded-chip border border-foreground/10 bg-foreground/5 px-2 py-0.5 text-[0.7rem] capitalize text-muted-foreground">
                     {s.type}
                   </span>
                 </div>

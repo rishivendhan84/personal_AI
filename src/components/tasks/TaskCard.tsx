@@ -27,7 +27,7 @@ function EffortBars({ score }: { score: number }) {
           key={i}
           className={cn(
             "w-[3px] rounded-full transition-colors",
-            i <= n ? "bg-violet" : "bg-white/12"
+            i <= n ? "bg-violet" : "bg-foreground/12"
           )}
           style={{ height: 4 + i * 2 }}
         />
@@ -80,7 +80,7 @@ export function TaskCard({
       onDragStart={() => onDragStart(task.id)}
       onDragEnd={() => onDragEnd?.()}
       className={cn(
-        "glass group relative flex gap-2 rounded-panel border border-white/8 p-2.5 text-sm shadow-card",
+        "glass group relative flex gap-2 rounded-panel border border-foreground/8 p-2.5 text-sm shadow-card",
         "transition-[box-shadow,opacity] duration-150 hover:shadow-glow-violet",
         dragging && "opacity-40",
         task.status === "done" && "opacity-70"
@@ -108,7 +108,7 @@ export function TaskCard({
           <button
             onClick={() => onDelete(task.id)}
             aria-label="Delete task"
-            className="-mr-1 -mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground/60 opacity-0 transition-all hover:bg-white/8 hover:text-danger group-hover:opacity-100"
+            className="-mr-1 -mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground/60 opacity-0 transition-all hover:bg-foreground/8 hover:text-danger group-hover:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -123,7 +123,7 @@ export function TaskCard({
           <button
             onClick={cycleStatus}
             disabled={busy}
-            className="rounded-chip border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-white/[0.07] hover:text-foreground"
+            className="rounded-chip border border-foreground/10 bg-foreground/[0.03] px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
             aria-label="Cycle status"
           >
             {STATUS_LABEL[task.status]}
@@ -135,7 +135,7 @@ export function TaskCard({
             {u.label}
           </span>
 
-          <span className="rounded-chip border border-white/10 px-2 py-0.5 text-[11px] text-muted-foreground">
+          <span className="rounded-chip border border-foreground/10 px-2 py-0.5 text-[11px] text-muted-foreground">
             {task.category}
           </span>
 

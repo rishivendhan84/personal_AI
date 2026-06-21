@@ -98,7 +98,7 @@ export function GoalCard({
               <Badge
                 variant="outline"
                 className={cn(
-                  "border-white/10 capitalize",
+                  "border-foreground/10 capitalize",
                   goal.type === "monthly" ? "text-cyan" : "text-violet"
                 )}
               >
@@ -149,7 +149,7 @@ export function GoalCard({
             transition={expand}
             className="overflow-hidden"
           >
-            <div className="mt-4 space-y-1.5 border-t border-white/[0.06] pt-3">
+            <div className="mt-4 space-y-1.5 border-t border-foreground/[0.06] pt-3">
               <div className="flex items-center justify-between">
                 <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground/70">
                   Projects
@@ -171,14 +171,14 @@ export function GoalCard({
               {goal.projects.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between gap-2 rounded-chip border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-sm transition-colors hover:border-violet/30"
+                  className="flex items-center justify-between gap-2 rounded-chip border border-foreground/[0.06] bg-foreground/[0.02] px-2.5 py-1.5 text-sm transition-colors hover:border-violet/30"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
                     <span className="truncate text-foreground/90">{p.title}</span>
                   </span>
                   {p.status !== "active" && (
-                    <Badge variant="outline" className="border-white/10 capitalize">
+                    <Badge variant="outline" className="border-foreground/10 capitalize">
                       {p.status}
                     </Badge>
                   )}

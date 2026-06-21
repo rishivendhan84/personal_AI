@@ -14,7 +14,7 @@ export const ShimmerButton = React.forwardRef<
     ref={ref}
     disabled={disabled || loading}
     className={cn(
-      "group relative inline-flex h-9 items-center justify-center gap-2 overflow-hidden rounded-chip border border-white/10 bg-white/[0.04] px-4 text-sm font-medium text-foreground backdrop-blur transition-colors hover:bg-white/[0.08] disabled:opacity-60",
+      "group relative inline-flex h-9 items-center justify-center gap-2 overflow-hidden rounded-chip border border-foreground/10 bg-foreground/[0.04] px-4 text-sm font-medium text-foreground backdrop-blur transition-colors hover:bg-foreground/[0.08] disabled:opacity-60",
       className
     )}
     {...props}

@@ -100,15 +100,15 @@ export function CommandPalette() {
       onOpenChange={setOpen}
       label="Command palette"
       shouldFilter={!query.startsWith(">") /* keep brain query unfiltered */}
-      className="fixed left-1/2 top-[18%] z-50 w-[92vw] max-w-xl -translate-x-1/2 overflow-hidden rounded-card border border-white/10 bg-[#111113]/90 shadow-glow-violet backdrop-blur-2xl data-[state=open]:animate-fade-up"
+      className="fixed left-1/2 top-[18%] z-50 w-[92vw] max-w-xl -translate-x-1/2 overflow-hidden rounded-card border border-foreground/10 bg-card/90 shadow-glow-violet backdrop-blur-2xl data-[state=open]:animate-fade-up"
     >
       {/* dim backdrop */}
       <div
-        className="fixed inset-0 -z-10 bg-black/50"
+        className="fixed inset-0 -z-10 bg-foreground/20"
         onClick={() => setOpen(false)}
         aria-hidden
       />
-      <div className="flex items-center gap-2 border-b border-white/10 px-4">
+      <div className="flex items-center gap-2 border-b border-foreground/10 px-4">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Command.Input
           ref={inputRef}
@@ -122,7 +122,7 @@ export function CommandPalette() {
           placeholder="Search, jump to a card, or ask your Brain…"
           className="h-12 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
-        <kbd className="hidden rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:inline">
+        <kbd className="hidden rounded bg-foreground/5 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:inline">
           ESC
         </kbd>
       </div>
@@ -133,7 +133,7 @@ export function CommandPalette() {
             <Command.Item
               value={`ask ${query}`}
               onSelect={askBrain}
-              className="flex cursor-pointer items-center gap-3 rounded-panel px-3 py-2.5 text-sm text-foreground aria-selected:bg-white/[0.06]"
+              className="flex cursor-pointer items-center gap-3 rounded-panel px-3 py-2.5 text-sm text-foreground aria-selected:bg-foreground/[0.06]"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-violet" />
@@ -149,7 +149,7 @@ export function CommandPalette() {
         )}
 
         {result && (
-          <div className="mx-2 my-2 rounded-panel border border-white/10 bg-white/[0.02] p-3 text-sm">
+          <div className="mx-2 my-2 rounded-panel border border-foreground/10 bg-foreground/[0.02] p-3 text-sm">
             {result.route && (
               <span className="mb-2 inline-block rounded-chip bg-violet/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-violet">
                 {result.route}
@@ -159,7 +159,7 @@ export function CommandPalette() {
               {result.answer ?? "No generated answer — showing matched sources."}
             </p>
             {result.sources?.length > 0 && (
-              <ul className="mt-2 space-y-1 border-t border-white/10 pt-2 text-xs text-muted-foreground">
+              <ul className="mt-2 space-y-1 border-t border-foreground/10 pt-2 text-xs text-muted-foreground">
                 {result.sources.slice(0, 5).map((s, i) => (
                   <li key={i} className="truncate">
                     [{i + 1}] {s.title ?? s.snippet}
@@ -180,7 +180,7 @@ export function CommandPalette() {
               key={href}
               value={label}
               onSelect={() => go(href)}
-              className="flex cursor-pointer items-center gap-3 rounded-panel px-3 py-2 text-sm text-foreground aria-selected:bg-white/[0.06]"
+              className="flex cursor-pointer items-center gap-3 rounded-panel px-3 py-2 text-sm text-foreground aria-selected:bg-foreground/[0.06]"
             >
               <Icon className="h-4 w-4 text-muted-foreground" />
               {label}

@@ -149,7 +149,7 @@ export function TaskBoard({
     <div className="space-y-4">
       {/* Toolbar: view switcher + actions */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-chip border border-white/10 bg-white/[0.03] p-0.5">
+        <div className="flex rounded-chip border border-foreground/10 bg-foreground/[0.03] p-0.5">
           <ViewBtn active={view === "kanban"} onClick={() => setView("kanban")} icon={Columns3} label="Tiers" />
           <ViewBtn active={view === "list"} onClick={() => setView("list")} icon={List} label="List" />
           <ViewBtn active={view === "category"} onClick={() => setView("category")} icon={LayoutGrid} label="Category" />
@@ -166,14 +166,14 @@ export function TaskBoard({
       </div>
 
       {/* Command-menu style structured filter bar (NOT semantic search) */}
-      <div className="gradient-border flex flex-wrap items-center gap-2 rounded-panel bg-white/[0.02] p-2">
+      <div className="gradient-border flex flex-wrap items-center gap-2 rounded-panel bg-foreground/[0.02] p-2">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet" />
           <input
             placeholder="Filter tasks by text…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="h-9 w-full rounded-chip border border-white/10 bg-white/[0.03] pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-violet/50"
+            className="h-9 w-full rounded-chip border border-foreground/10 bg-foreground/[0.03] pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-violet/50"
           />
         </div>
         <Select
@@ -199,7 +199,7 @@ export function TaskBoard({
           ]}
         />
         <span className="hidden items-center gap-1.5 px-2 text-[11px] text-muted-foreground/70 sm:inline-flex">
-          <kbd className="inline-flex items-center gap-0.5 rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">
+          <kbd className="inline-flex items-center gap-0.5 rounded border border-foreground/10 bg-foreground/[0.04] px-1.5 py-0.5 font-mono text-[10px]">
             <Command className="h-3 w-3" />K
           </kbd>
           opens the Brain
@@ -272,7 +272,7 @@ function ViewBtn({
         "flex items-center gap-1.5 rounded-chip px-2.5 py-1 text-sm transition-colors",
         active
           ? "bg-violet/15 text-foreground font-medium ring-1 ring-violet/30"
-          : "text-muted-foreground hover:bg-white/[0.05]"
+          : "text-muted-foreground hover:bg-foreground/[0.05]"
       )}
     >
       <Icon className="h-4 w-4" />
@@ -341,8 +341,8 @@ function KanbanView({
             }}
             onDrop={() => onDropTier(tier)}
             className={cn(
-              "flex min-w-[78vw] shrink-0 snap-start flex-col gap-2 rounded-panel border bg-white/[0.015] p-2 transition-colors sm:min-w-0",
-              isOver ? "border-white/20" : "border-white/8"
+              "flex min-w-[78vw] shrink-0 snap-start flex-col gap-2 rounded-panel border bg-foreground/[0.015] p-2 transition-colors sm:min-w-0",
+              isOver ? "border-foreground/20" : "border-foreground/8"
             )}
             style={isOver ? { backgroundColor: `${u.hex}0d` } : undefined}
           >
