@@ -17,13 +17,14 @@ import { BentoGrid } from "@/components/dashboard/BentoGrid";
 import { OperatorHero } from "@/components/dashboard/OperatorHero";
 import {
   TasksTile,
-  HabitsTile,
   CalendarTile,
   GoalsTile,
   FinanceTile,
-  NutritionTile,
   BriefBanner,
 } from "@/components/dashboard/BentoTiles";
+import { HabitsTile, type DashHabit } from "@/components/dashboard/HabitsTile";
+import { NutritionTile } from "@/components/dashboard/NutritionTile";
+import { QuickAddTask } from "@/components/dashboard/QuickAddTask";
 import { GenerateBriefButton } from "@/components/dashboard/GenerateBriefButton";
 import { BentoCard } from "@/components/ui/bento-card";
 
@@ -70,7 +71,7 @@ export default async function DashboardPage() {
     user?.timezone === "Asia/Kolkata" ? user.timezone : USER_TZ;
   const todayKey = dateKeyInTz(new Date(), tz);
 
-  const [brief, events, taskCounts, tasksDoneToday, bestStreak, netWorth, nutrition] =
+  const [brief, events, taskCounts, tasksDoneToday, bestStreak, netWorth, nutrition, habits] =
     await Promise.all([
       getLatestBrief(),
       todayEvents(db, todayKey),
@@ -79,26 +80,40 @@ export default async function DashboardPage() {
       bestStreakAcrossHabits(db, todayKey),
       latestNetWorth(db),
       todayNutrition(db, todayKey),
+      habitsWithTodayState(db, todayKey),
     ]);
 
   const name = user?.name?.split(" ")[0] ?? "Operator";
 
   if (!brief) {
+    // No brief yet — still a working surface: quick-add tasks and complete
+    // habits inline before generation. The interactive tiles don't need a brief.
     return (
       <div className="space-y-4">
         <BentoGrid>
           <BentoCard glow span="md:col-span-2 md:row-span-2">
-            <div className="flex h-full flex-col items-center justify-center py-10 text-center">
-              <CalendarClock className="h-8 w-8 text-violet" />
-              <h1 className="mt-4 font-serif text-4xl leading-tight tracking-tight">
-                No brief yet today
-              </h1>
-              <p className="mb-6 mt-2 max-w-sm text-sm text-muted-foreground">
-                Generate your daily brief to see your focus, priorities, and schedule.
-              </p>
-              <GenerateBriefButton />
+            <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
+              <div>
+                <CalendarClock className="mx-auto h-8 w-8 text-violet" />
+                <h1 className="mt-4 font-serif text-4xl leading-tight tracking-tight">
+                  No brief yet today
+                </h1>
+                <p className="mb-6 mt-2 max-w-sm text-sm text-muted-foreground">
+                  Generate your daily brief to see your focus, priorities, and schedule — or just
+                  start working below.
+                </p>
+                <GenerateBriefButton />
+              </div>
+              <div className="w-full max-w-md text-left">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Quick capture
+                </p>
+                <QuickAddTask />
+              </div>
             </div>
           </BentoCard>
+          <TasksTile counts={taskCounts} />
+          <HabitsTile habits={habits} bestStreak={bestStreak} />
           <CalendarTile calendar={[]} timeZone={tz} />
           <FinanceTile netWorth={netWorth} />
           <NutritionTile calories={nutrition.calories} target={nutrition.target} />
@@ -121,12 +136,12 @@ export default async function DashboardPage() {
           timeZone={tz}
           top3={c.top3}
           calendar={c.calendar}
-          habits={c.habits}
+          habits={habits}
           tasksDoneToday={tasksDoneToday}
           bestStreak={bestStreak}
         />
         <TasksTile counts={taskCounts} />
-        <HabitsTile habits={c.habits} bestStreak={bestStreak} />
+        <HabitsTile habits={habits} bestStreak={bestStreak} />
         <CalendarTile calendar={c.calendar} timeZone={tz} />
         <GoalsTile goals={c.goal_progress} />
         <FinanceTile netWorth={netWorth} />
@@ -183,6 +198,32 @@ async function bestStreakAcrossHabits(db: Db, todayKey: string): Promise<number>
     if (longest > best) best = longest;
   }
   return best;
+}
+
+/**
+ * Active habits with today's done-state and their ids — the brief's habits array
+ * carries no ids, so the dashboard can't toggle from it. We read the `habits`
+ * table (active) + today's `habit_logs` (log_date = todayKey) and join into the
+ * {id, name, done}[] the interactive tiles need. Defensive: degrades to [].
+ */
+async function habitsWithTodayState(db: Db, todayKey: string): Promise<DashHabit[]> {
+  try {
+    const [habitsRes, logsRes] = await Promise.all([
+      db.from("habits").select("id, name").eq("active", true).order("name"),
+      db.from("habit_logs").select("habit_id").eq("log_date", todayKey),
+    ]);
+    if (habitsRes.error) return [];
+    const doneIds = new Set(
+      (logsRes.data ?? []).map((l: { habit_id: string }) => l.habit_id)
+    );
+    return ((habitsRes.data ?? []) as { id: string; name: string }[]).map((h) => ({
+      id: h.id,
+      name: h.name,
+      done: doneIds.has(h.id),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 /** Latest finance snapshot's net worth, or null. */

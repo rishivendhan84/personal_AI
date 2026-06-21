@@ -1,12 +1,5 @@
 "use client";
-import {
-  ListChecks,
-  CheckCircle2,
-  CalendarClock,
-  Target,
-  Wallet,
-  Apple,
-} from "lucide-react";
+import { ListChecks, CalendarClock, Target, Wallet } from "lucide-react";
 import { BentoCard, BentoHeader } from "@/components/ui/bento-card";
 import { CountUp } from "@/components/ui/count-up";
 import { URGENCY, URGENCY_ORDER } from "@/lib/ui";
@@ -34,49 +27,6 @@ export function TasksTile({ counts }: { counts: Record<TaskUrgency, number> }) {
           </span>
         ))}
         {total === 0 && <span className="text-xs text-muted-foreground">All clear.</span>}
-      </div>
-    </BentoCard>
-  );
-}
-
-/** Habits tile: today's dots + best streak. */
-export function HabitsTile({
-  habits,
-  bestStreak,
-}: {
-  habits: DailyBriefContent["habits"];
-  bestStreak: number;
-}) {
-  const done = habits.filter((h) => h.done).length;
-  return (
-    <BentoCard>
-      <BentoHeader icon={CheckCircle2} title="Habits" href="/habits" />
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {habits.length === 0 ? (
-          <span className="text-xs text-muted-foreground">No active habits.</span>
-        ) : (
-          habits.map((h, i) => (
-            <span
-              key={`${h.name}-${i}`}
-              title={h.name}
-              className={
-                "h-3 w-3 rounded-full " +
-                (h.done
-                  ? "bg-positive shadow-[0_0_8px_rgba(74,222,128,0.5)]"
-                  : "border border-white/15 bg-white/[0.03]")
-              }
-            />
-          ))
-        )}
-      </div>
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          <span className="font-mono tabular-nums text-foreground">{done}</span>/
-          <span className="font-mono tabular-nums">{habits.length}</span> today
-        </span>
-        <span>
-          best <span className="font-mono tabular-nums text-foreground">{bestStreak}</span>d
-        </span>
       </div>
     </BentoCard>
   );
@@ -157,50 +107,6 @@ export function FinanceTile({ netWorth }: { netWorth: number | null }) {
         <div className="text-2xl font-semibold text-foreground">
           <CountUp value={netWorth} animateOnMount={false} prefix="₹" />
         </div>
-      )}
-    </BentoCard>
-  );
-}
-
-/** Nutrition tile: today's calories vs target. Defensive — data may be absent. */
-export function NutritionTile({
-  calories,
-  target,
-}: {
-  calories: number | null;
-  target: number | null;
-}) {
-  const pct =
-    calories !== null && target && target > 0
-      ? Math.min(100, Math.round((calories / target) * 100))
-      : null;
-  return (
-    <BentoCard>
-      <BentoHeader icon={Apple} title="Nutrition" href="/nutrition" />
-      {calories === null ? (
-        <p className="text-2xl font-semibold text-muted-foreground">—</p>
-      ) : (
-        <>
-          <div className="mb-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold text-foreground">
-              <CountUp value={calories} animateOnMount={false} />
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {target ? (
-                <>
-                  / <span className="font-mono tabular-nums">{target.toLocaleString()}</span> kcal
-                </>
-              ) : (
-                "kcal"
-              )}
-            </span>
-          </div>
-          {pct !== null && (
-            <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-              <div className="h-full rounded-full bg-cyan" style={{ width: `${pct}%` }} />
-            </div>
-          )}
-        </>
       )}
     </BentoCard>
   );
