@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Aurora />
             <div className="relative z-10">
               <Nav />
-              <main className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 sm:py-8">
+              <main className="mx-auto w-full px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
                 {children}
               </main>
             </div>

@@ -56,7 +56,7 @@ export function Nav() {
   const pathname = usePathname();
   return (
     <nav className="sticky top-0 z-30 border-b border-foreground/5 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:px-6">
+      <div className="mx-auto flex w-full items-center gap-2 px-4 py-2.5 sm:px-6 lg:px-8">
         <Link href="/" className="mr-1 flex items-center gap-2 font-semibold tracking-tight">
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-chip bg-gradient-to-br from-violet to-cyan text-[11px] font-bold text-white shadow-glow-violet">
             R

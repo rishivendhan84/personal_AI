@@ -1,10 +1,10 @@
 "use client";
 import * as React from "react";
-import { Hourglass, Play } from "lucide-react";
+import { Hourglass } from "lucide-react";
 import Link from "next/link";
 import { BentoCard, BentoHeader } from "@/components/ui/bento-card";
 import { useFocus } from "@/components/focus/FocusProvider";
-import { fmtClock, MODES } from "@/lib/focus";
+import { fmtClock, MODES, MODE_ORDER } from "@/lib/focus";
 import type { FocusView } from "@/app/api/focus/route";
 
 /**
@@ -51,20 +51,26 @@ export function FocusTile() {
             </span>
             <span className="ml-1.5 text-xs text-muted-foreground">min today</span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => f.start("quick")}
-              className="inline-flex items-center gap-1.5 rounded-chip border border-violet/30 bg-violet/10 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-violet/20"
-            >
-              <Play className="h-3.5 w-3.5 text-violet" /> Start 25m
-            </button>
-            <Link
-              href="/focus"
-              className="inline-flex items-center rounded-chip border border-border bg-accent/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              More modes
-            </Link>
+          <div className="space-y-1.5">
+            {MODE_ORDER.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => f.start(m)}
+                className="flex w-full items-center justify-between gap-2 rounded-chip border border-border bg-accent/40 px-2.5 py-1.5 text-xs transition-colors hover:bg-accent/70"
+              >
+                <span className="flex items-center gap-1.5 font-medium text-foreground">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: MODES[m].accent }}
+                  />
+                  {MODES[m].label}
+                </span>
+                <span className="font-mono tabular-nums text-muted-foreground">
+                  {MODES[m].focusMin}/{MODES[m].breakMin}m
+                </span>
+              </button>
+            ))}
           </div>
         </>
       )}
