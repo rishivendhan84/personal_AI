@@ -6,11 +6,9 @@ import { Plus } from "lucide-react";
 import type { GoalType } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { useReducedMotion, DUR } from "@/lib/motion";
 import type { GoalWithDetail } from "@/app/api/goals/route";
-
-const SELECT =
-  "h-9 rounded-md border border-white/10 bg-white/[0.03] px-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet/50";
 
 /** Inline goal creator (PRD §7.5). Type weekly/monthly with a real period_start
  * date — manual reset only, no auto-rollover. Restyled; behavior unchanged. */
@@ -72,10 +70,16 @@ export function NewGoalForm({ onCreated }: { onCreated: (goal: GoalWithDetail) =
           onChange={(e) => setTitle(e.target.value)}
           className="min-w-[220px] flex-1"
         />
-        <select className={SELECT} value={type} onChange={(e) => setType(e.target.value as GoalType)}>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
+        <Select
+          aria-label="Goal type"
+          className="w-36"
+          value={type}
+          onChange={(v) => setType(v as GoalType)}
+          options={[
+            { value: "weekly", label: "Weekly" },
+            { value: "monthly", label: "Monthly" },
+          ]}
+        />
         <Input
           type="date"
           value={periodStart}

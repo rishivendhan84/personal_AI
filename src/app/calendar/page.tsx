@@ -43,7 +43,7 @@ export default async function CalendarPage() {
 
       {!db && (
         <SetupHint
-          what="PAIOS"
+          what="Database"
           vars={["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]}
         />
       )}

@@ -32,11 +32,11 @@ export function Nav() {
     <nav className="sticky top-0 z-30 border-b border-white/5 bg-[#09090B]/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2.5 sm:px-6">
         <Link href="/" className="mr-1 flex items-center gap-2 font-semibold tracking-tight">
-          <span className="grid h-7 w-7 place-items-center rounded-chip bg-gradient-to-br from-violet to-cyan text-[11px] font-bold text-white shadow-glow-violet">
-            P
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-chip bg-gradient-to-br from-violet to-cyan text-[11px] font-bold text-white shadow-glow-violet">
+            R
           </span>
-          <span className="hidden bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent sm:inline">
-            PAIOS
+          <span className="hidden whitespace-nowrap bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent sm:inline">
+            Rishi&apos;s Personal Assistant
           </span>
         </Link>
 
@@ -68,7 +68,7 @@ export function Nav() {
         >
           <CommandIcon className="h-3.5 w-3.5" />
           <span>Search</span>
-          <kbd className="rounded bg-white/5 px-1 py-0.5 text-[10px]">⌘K</kbd>
+          <kbd className="rounded bg-white/5 px-1 py-0.5 text-[10px]">Ctrl K</kbd>
         </button>
         <ThemeToggle />
       </div>

@@ -91,7 +91,7 @@ export function SearchBox({
       <p className="mt-3 text-center text-xs text-muted-foreground">
         Press{" "}
         <kbd className="rounded-chip border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[0.7rem] tabular-nums text-foreground">
-          ⌘K
+          Ctrl K
         </kbd>{" "}
         anywhere for quick Brain access.
       </p>

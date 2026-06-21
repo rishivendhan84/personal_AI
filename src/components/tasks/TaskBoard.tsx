@@ -6,6 +6,7 @@ import { Columns3, List, LayoutGrid, RefreshCw, Search, Command } from "lucide-r
 import type { Goal, GoalProject, Task, TaskCategory, TaskUrgency } from "@/lib/db/types";
 import { EmptyState } from "@/components/ui/page";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { URGENCY, URGENCY_ORDER } from "@/lib/ui";
 import { bentoContainer, useReducedMotion } from "@/lib/motion";
@@ -14,8 +15,6 @@ import { NewTaskForm } from "./NewTaskForm";
 import { CATEGORIES, URGENCY_LABEL } from "./constants";
 
 type View = "kanban" | "list" | "category";
-const SELECT =
-  "h-9 rounded-chip border border-white/10 bg-white/[0.03] px-2.5 text-sm text-foreground outline-none transition-colors hover:bg-white/[0.06] focus:border-violet/50";
 
 /**
  * The interactive tasks board (PRD §7.4). Owns task state locally so mutations
@@ -177,30 +176,28 @@ export function TaskBoard({
             className="h-9 w-full rounded-chip border border-white/10 bg-white/[0.03] pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-violet/50"
           />
         </div>
-        <select
-          className={SELECT}
+        <Select
+          aria-label="Filter by category"
+          className="w-40"
+          placeholder="All categories"
           value={fCategory}
-          onChange={(e) => setFCategory(e.target.value as TaskCategory | "")}
-        >
-          <option value="">All categories</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
-          className={SELECT}
+          onChange={(v) => setFCategory(v as TaskCategory | "")}
+          options={[
+            { value: "", label: "All categories" },
+            ...CATEGORIES.map((c) => ({ value: c, label: c })),
+          ]}
+        />
+        <Select
+          aria-label="Filter by tier"
+          className="w-40"
+          placeholder="All tiers"
           value={fUrgency}
-          onChange={(e) => setFUrgency(e.target.value as TaskUrgency | "")}
-        >
-          <option value="">All tiers</option>
-          {URGENCY_ORDER.map((u) => (
-            <option key={u} value={u}>
-              {URGENCY_LABEL[u]}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setFUrgency(v as TaskUrgency | "")}
+          options={[
+            { value: "", label: "All tiers" },
+            ...URGENCY_ORDER.map((u) => ({ value: u, label: URGENCY_LABEL[u] })),
+          ]}
+        />
         <span className="hidden items-center gap-1.5 px-2 text-[11px] text-muted-foreground/70 sm:inline-flex">
           <kbd className="inline-flex items-center gap-0.5 rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">
             <Command className="h-3 w-3" />K

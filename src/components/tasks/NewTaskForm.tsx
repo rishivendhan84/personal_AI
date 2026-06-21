@@ -5,10 +5,8 @@ import { Plus } from "lucide-react";
 import type { Goal, GoalProject, Task, TaskCategory, TaskUrgency } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { CATEGORIES, URGENCIES, URGENCY_LABEL } from "./constants";
-
-const SELECT =
-  "h-9 rounded-chip border border-white/10 bg-white/[0.03] px-2.5 text-sm text-foreground outline-none transition-colors hover:bg-white/[0.06] focus:border-violet/50";
 
 /**
  * Inline task creator. Optional goal + project picker (PRD §7.4) — projects are
@@ -103,36 +101,28 @@ export function NewTaskForm({
         className="min-h-[56px]"
       />
       <div className="flex flex-wrap gap-2">
-        <select
-          className={SELECT}
+        <Select
+          aria-label="Category"
+          className="w-36"
           value={category}
-          onChange={(e) => setCategory(e.target.value as TaskCategory)}
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
-          className={SELECT}
+          onChange={(v) => setCategory(v as TaskCategory)}
+          options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+        />
+        <Select
+          aria-label="Urgency"
+          className="w-36"
           value={urgency}
-          onChange={(e) => setUrgency(e.target.value as TaskUrgency)}
-        >
-          {URGENCIES.map((u) => (
-            <option key={u} value={u}>
-              {URGENCY_LABEL[u]}
-            </option>
-          ))}
-        </select>
-        <select className={SELECT} value={effort} onChange={(e) => setEffort(e.target.value)}>
-          <option value="">Effort</option>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <option key={n} value={n}>
-              Effort {n}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setUrgency(v as TaskUrgency)}
+          options={URGENCIES.map((u) => ({ value: u, label: URGENCY_LABEL[u] }))}
+        />
+        <Select
+          aria-label="Effort"
+          className="w-28"
+          placeholder="Effort"
+          value={effort}
+          onChange={(v) => setEffort(v)}
+          options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `Effort ${n}` }))}
+        />
         <Input
           type="date"
           value={dueDate}
@@ -142,27 +132,27 @@ export function NewTaskForm({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <select className={SELECT} value={goalId} onChange={(e) => setGoalId(e.target.value)}>
-          <option value="">No goal</option>
-          {goals.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.title}
-            </option>
-          ))}
-        </select>
-        <select
-          className={SELECT}
+        <Select
+          aria-label="Goal"
+          className="w-full sm:w-44"
+          value={goalId}
+          onChange={(v) => setGoalId(v)}
+          options={[
+            { value: "", label: "No goal" },
+            ...goals.map((g) => ({ value: g.id, label: g.title })),
+          ]}
+        />
+        <Select
+          aria-label="Project"
+          className="w-full sm:w-44"
           value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
+          onChange={(v) => setProjectId(v)}
           disabled={!goalId || goalProjects.length === 0}
-        >
-          <option value="">{goalId ? "No project" : "Pick a goal first"}</option>
-          {goalProjects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.title}
-            </option>
-          ))}
-        </select>
+          options={[
+            { value: "", label: goalId ? "No project" : "Pick a goal first" },
+            ...goalProjects.map((p) => ({ value: p.id, label: p.title })),
+          ]}
+        />
       </div>
 
       <div className="flex gap-2">

@@ -54,9 +54,6 @@ export function OperatorHero({
             </h1>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <Clock timeZone={timeZone} />
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                {timeZone.split("/").pop()?.replace("_", " ")}
-              </span>
             </div>
           </div>
 

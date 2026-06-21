@@ -46,7 +46,7 @@ export default async function DashboardPage() {
         <BentoGrid>
           <BentoCard glow span="md:col-span-2 md:row-span-2">
             <h1 className="font-serif text-4xl leading-tight tracking-tight">
-              Welcome to PAIOS
+              Welcome to your assistant
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
               Connect Supabase to activate your Operator console.
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
           </BentoCard>
         </BentoGrid>
         <SetupHint
-          what="PAIOS"
+          what="Your assistant"
           vars={["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]}
         />
       </div>

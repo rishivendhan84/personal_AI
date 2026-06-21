@@ -17,7 +17,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "PAIOS — Operator Console",
+  title: "Rishi's Personal Assistant",
   description: "Capture everything, file it automatically, and direct your day.",
 };
 
