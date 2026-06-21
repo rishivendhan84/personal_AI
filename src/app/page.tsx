@@ -127,13 +127,13 @@ export default async function DashboardPage() {
               </div>
             </div>
           </BentoCard>
-          <TasksTile counts={taskCounts} tasks={topTasks} />
-          <HabitsTile habits={habits} bestStreak={bestStreak} />
           <FocusTile />
-          <CalendarTile calendar={[]} timeZone={tz} />
+          <HabitsTile habits={habits} bestStreak={bestStreak} />
+          <TasksTile counts={taskCounts} tasks={topTasks} span="sm:col-span-2" />
           <GoalsTile goals={goals} />
-          <FinanceTile netWorth={netWorth} />
           <NutritionTile calories={nutrition.calories} target={nutrition.target} />
+          <CalendarTile calendar={[]} timeZone={tz} />
+          <FinanceTile netWorth={netWorth} />
         </BentoGrid>
       </div>
     );
@@ -157,13 +157,13 @@ export default async function DashboardPage() {
           tasksDoneToday={tasksDoneToday}
           bestStreak={bestStreak}
         />
-        <TasksTile counts={taskCounts} tasks={topTasks} />
-        <HabitsTile habits={habits} bestStreak={bestStreak} />
         <FocusTile />
-        <CalendarTile calendar={c.calendar} timeZone={tz} />
+        <HabitsTile habits={habits} bestStreak={bestStreak} />
+        <TasksTile counts={taskCounts} tasks={topTasks} span="sm:col-span-2" />
         <GoalsTile goals={goals} />
-        <FinanceTile netWorth={netWorth} />
         <NutritionTile calories={nutrition.calories} target={nutrition.target} />
+        <CalendarTile calendar={c.calendar} timeZone={tz} />
+        <FinanceTile netWorth={netWorth} />
       </BentoGrid>
     </div>
   );
