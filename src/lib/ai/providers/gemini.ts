@@ -14,7 +14,7 @@ export const geminiLlm: LlmProvider = {
   name: "gemini:flash",
   async classify(text: string): Promise<Classification> {
     const model = genai().getGenerativeModel({
-      model: "gemini-1.5-flash-8b",
+      model: "gemini-2.0-flash-lite",
       generationConfig: { temperature: 0, responseMimeType: "application/json" },
       systemInstruction: CLASSIFY_SYSTEM,
     });
@@ -23,7 +23,7 @@ export const geminiLlm: LlmProvider = {
   },
   async complete({ system, prompt, json, maxTokens }): Promise<string> {
     const model = genai().getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       ...(system ? { systemInstruction: system } : {}),
       generationConfig: {
         temperature: 0.4,

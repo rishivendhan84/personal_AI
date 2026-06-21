@@ -229,11 +229,16 @@ export async function answer(q: string): Promise<BrainResult> {
     return { answer: null, sources, route };
   }
 
-  const text = await reason({
-    system: SYSTEM,
-    prompt: buildPrompt(q, sources),
-    maxTokens: 700,
-  });
-
-  return { answer: text.trim(), sources, route };
+  try {
+    const text = await reason({
+      system: SYSTEM,
+      prompt: buildPrompt(q, sources),
+      maxTokens: 700,
+    });
+    return { answer: text.trim(), sources, route };
+  } catch (e) {
+    // A model/network error shouldn't 500 the Brain — fall back to sources.
+    console.warn("[PAIOS:brain] reason() failed, returning sources only:", e);
+    return { answer: null, sources, route };
+  }
 }
