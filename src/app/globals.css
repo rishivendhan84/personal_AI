@@ -10,6 +10,13 @@
     --surface-elevated: 240 6% 7%; /* #111113 */
     --foreground: 0 0% 98%; /* #FAFAFA */
 
+    /* Glass tints — theme-aware so light mode isn't white-on-white. */
+    --glass-fill: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --hairline-top: rgba(255, 255, 255, 0.14);
+    --hairline-bottom: rgba(255, 255, 255, 0.02);
+    --grain-opacity: 0.025;
+
     --card: 240 7% 8%;
     --card-foreground: 0 0% 98%;
 
@@ -35,26 +42,32 @@
     --radius: 0.75rem;
   }
 
-  /* Optional secondary light theme. */
+  /* Secondary light theme — soft off-white, neutral hairlines (not white-alpha). */
   .light {
-    --background: 0 0% 100%;
-    --surface-elevated: 240 5% 96%;
-    --foreground: 240 10% 8%;
+    --background: 240 20% 98%; /* soft cool off-white */
+    --surface-elevated: 0 0% 100%;
+    --foreground: 240 22% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 8%;
+    --card-foreground: 240 22% 12%;
     --primary: 252 80% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 94%;
-    --secondary-foreground: 240 10% 8%;
-    --muted: 240 5% 94%;
-    --muted-foreground: 240 4% 40%;
-    --accent: 240 5% 92%;
-    --accent-foreground: 240 10% 8%;
+    --secondary: 240 16% 95%;
+    --secondary-foreground: 240 22% 12%;
+    --muted: 240 16% 95%;
+    --muted-foreground: 240 8% 42%;
+    --accent: 240 18% 94%;
+    --accent-foreground: 240 22% 12%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 88%;
-    --input: 240 6% 88%;
+    --border: 240 14% 89%;
+    --input: 240 14% 89%;
     --ring: 252 80% 58%;
+
+    --glass-fill: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(20, 22, 40, 0.1);
+    --hairline-top: rgba(20, 22, 40, 0.1);
+    --hairline-bottom: rgba(20, 22, 40, 0.02);
+    --grain-opacity: 0.015;
   }
 
   * {
@@ -75,9 +88,9 @@
 @layer components {
   /* Glass bento surface: translucent fill, blur, gradient hairline border. */
   .glass {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: var(--glass-fill);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
   }
   /* 1px gradient border, lighter at the top edge (premium card framing). */
   .gradient-border {
@@ -91,8 +104,8 @@
     padding: 1px;
     background: linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.14),
-      rgba(255, 255, 255, 0.02)
+      var(--hairline-top),
+      var(--hairline-bottom)
     );
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
@@ -109,7 +122,7 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    opacity: 0.025;
+    opacity: var(--grain-opacity, 0.025);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .text-shimmer {

@@ -21,6 +21,7 @@ import {
   GoalsTile,
   FinanceTile,
   BriefBanner,
+  type DashTask,
 } from "@/components/dashboard/BentoTiles";
 import { HabitsTile, type DashHabit } from "@/components/dashboard/HabitsTile";
 import { NutritionTile } from "@/components/dashboard/NutritionTile";
@@ -71,17 +72,30 @@ export default async function DashboardPage() {
     user?.timezone === "Asia/Kolkata" ? user.timezone : USER_TZ;
   const todayKey = dateKeyInTz(new Date(), tz);
 
-  const [brief, events, taskCounts, tasksDoneToday, bestStreak, netWorth, nutrition, habits] =
-    await Promise.all([
-      getLatestBrief(),
-      todayEvents(db, todayKey),
-      openTaskCounts(db),
-      tasksDoneTodayCount(db, todayKey),
-      bestStreakAcrossHabits(db, todayKey),
-      latestNetWorth(db),
-      todayNutrition(db, todayKey),
-      habitsWithTodayState(db, todayKey),
-    ]);
+  const [
+    brief,
+    events,
+    taskCounts,
+    tasksDoneToday,
+    bestStreak,
+    netWorth,
+    nutrition,
+    habits,
+    goals,
+    topTasks,
+  ] = await Promise.all([
+    getLatestBrief(),
+    todayEvents(db, todayKey),
+    openTaskCounts(db),
+    tasksDoneTodayCount(db, todayKey),
+    bestStreakAcrossHabits(db, todayKey),
+    latestNetWorth(db),
+    todayNutrition(db, todayKey),
+    habitsWithTodayState(db, todayKey),
+    dashboardGoals(db),
+    topOpenTasks(db),
+  ]);
+  void events; // (kept for future use; calendar tile reads the brief's list)
 
   const name = user?.name?.split(" ")[0] ?? "Operator";
 
@@ -112,9 +126,10 @@ export default async function DashboardPage() {
               </div>
             </div>
           </BentoCard>
-          <TasksTile counts={taskCounts} />
+          <TasksTile counts={taskCounts} tasks={topTasks} />
           <HabitsTile habits={habits} bestStreak={bestStreak} />
           <CalendarTile calendar={[]} timeZone={tz} />
+          <GoalsTile goals={goals} />
           <FinanceTile netWorth={netWorth} />
           <NutritionTile calories={nutrition.calories} target={nutrition.target} />
         </BentoGrid>
@@ -140,10 +155,10 @@ export default async function DashboardPage() {
           tasksDoneToday={tasksDoneToday}
           bestStreak={bestStreak}
         />
-        <TasksTile counts={taskCounts} />
+        <TasksTile counts={taskCounts} tasks={topTasks} />
         <HabitsTile habits={habits} bestStreak={bestStreak} />
         <CalendarTile calendar={c.calendar} timeZone={tz} />
-        <GoalsTile goals={c.goal_progress} />
+        <GoalsTile goals={goals} />
         <FinanceTile netWorth={netWorth} />
         <NutritionTile calories={nutrition.calories} target={nutrition.target} />
       </BentoGrid>
@@ -221,6 +236,54 @@ async function habitsWithTodayState(db: Db, todayKey: string): Promise<DashHabit
       name: h.name,
       done: doneIds.has(h.id),
     }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Active goals with deterministic progress (% of the goal's tasks done) — read
+ * straight from the goals/tasks tables so the dashboard matches the Goals page
+ * even when no brief has been generated. Degrades to [] on any failure.
+ */
+async function dashboardGoals(db: Db): Promise<{ title: string; pct: number }[]> {
+  try {
+    const { data } = await db
+      .from("goals")
+      .select("id, title")
+      .eq("status", "active")
+      .order("created_at", { ascending: true });
+    const goals = ((data ?? []) as { id: string; title: string }[]).slice(0, 6);
+    return await Promise.all(
+      goals.map(async (g) => {
+        const [{ count: total }, { count: done }] = await Promise.all([
+          db.from("tasks").select("*", { count: "exact", head: true }).eq("goal_id", g.id),
+          db
+            .from("tasks")
+            .select("*", { count: "exact", head: true })
+            .eq("goal_id", g.id)
+            .eq("status", "done"),
+        ]);
+        const pct = total && total > 0 ? Math.round(((done ?? 0) / total) * 100) : 0;
+        return { title: g.title, pct };
+      })
+    );
+  } catch {
+    return [];
+  }
+}
+
+/** Top open tasks (highest priority first) for the actionable Tasks tile. */
+async function topOpenTasks(db: Db): Promise<DashTask[]> {
+  try {
+    const { data } = await db
+      .from("tasks")
+      .select("id, title, urgency")
+      .neq("status", "done")
+      .order("ai_priority_score", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: true })
+      .limit(6);
+    return (data ?? []) as DashTask[];
   } catch {
     return [];
   }

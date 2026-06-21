@@ -2,11 +2,21 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Crosshair, CalendarClock, Flame, CheckCircle2, Check, Loader2 } from "lucide-react";
+import {
+  MapPin,
+  Crosshair,
+  CalendarClock,
+  Flame,
+  CheckCircle2,
+  Check,
+  Loader2,
+  Pencil,
+} from "lucide-react";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Spotlight } from "@/components/ui/spotlight";
 import { SplitText } from "@/components/ui/shiny-text";
 import { CountUp } from "@/components/ui/count-up";
+import { Input } from "@/components/ui/input";
 import { Clock } from "./Clock";
 import { HeroHabitChips, type DashHabit } from "./HabitsTile";
 import { QuickAddTask } from "./QuickAddTask";
@@ -63,16 +73,11 @@ export function OperatorHero({
             </div>
           </div>
 
-          {/* Focus pill + location chip */}
+          {/* Focus pill (editable) + location chip */}
           <div className="flex flex-wrap items-center gap-2">
-            {focus && (
-              <span className="inline-flex items-center gap-1.5 rounded-chip border border-violet/30 bg-violet/10 px-3 py-1 text-xs font-medium text-foreground">
-                <Crosshair className="h-3.5 w-3.5 text-violet" />
-                {focus}
-              </span>
-            )}
+            <EditableFocus focus={focus} />
             {location && (
-              <span className="inline-flex items-center gap-1.5 rounded-chip border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-chip border border-border bg-accent/40 px-3 py-1 text-xs text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5 text-cyan" />
                 {location}
               </span>
@@ -248,6 +253,75 @@ function Top3Row({ task, index }: { task: Top3Item; index: number }) {
         )}
       </div>
     </motion.li>
+  );
+}
+
+/** Placeholder values we treat as "no focus set yet" (seed/dev leftovers). */
+const FOCUS_PLACEHOLDERS = new Set(["ship the paios vertical slice", ""]);
+
+/**
+ * Editable focus pill. Click to set today's focus inline; saves via
+ * PATCH /api/user then refreshes. Shows a prompt instead of the old seed text.
+ */
+function EditableFocus({ focus }: { focus: string | null }) {
+  const router = useRouter();
+  const initial = focus && !FOCUS_PLACEHOLDERS.has(focus.trim().toLowerCase()) ? focus : "";
+  const [editing, setEditing] = React.useState(false);
+  const [value, setValue] = React.useState(initial);
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setValue(focus && !FOCUS_PLACEHOLDERS.has(focus.trim().toLowerCase()) ? focus : "");
+  }, [focus]);
+
+  async function save() {
+    setSaving(true);
+    try {
+      await fetch("/api/user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_focus: value.trim() }),
+      });
+      setEditing(false);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-chip border border-violet/40 bg-violet/10 px-2 py-1">
+        <Crosshair className="h-3.5 w-3.5 shrink-0 text-violet" />
+        <Input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void save();
+            if (e.key === "Escape") setEditing(false);
+          }}
+          onBlur={() => void save()}
+          placeholder="What's your focus today?"
+          className="h-6 w-56 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0"
+        />
+        {saving && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-violet" />}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="group inline-flex items-center gap-1.5 rounded-chip border border-violet/30 bg-violet/10 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-violet/20"
+    >
+      <Crosshair className="h-3.5 w-3.5 text-violet" />
+      <span className={value ? "" : "text-muted-foreground"}>
+        {value || "Set today's focus"}
+      </span>
+      <Pencil className="h-3 w-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+    </button>
   );
 }
 

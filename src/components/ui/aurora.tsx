@@ -21,8 +21,8 @@ export function Aurora() {
         className="absolute -bottom-1/3 right-1/4 h-[50vh] w-[50vh] animate-aurora rounded-full bg-[#22D3EE] opacity-[0.08] blur-[120px]"
         style={{ animationDelay: "-9s" }}
       />
-      {/* vignette to keep edges calm */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,#09090B_100%)]" />
+      {/* vignette to keep edges calm — fades to the active theme background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,hsl(var(--background))_100%)]" />
     </div>
   );
 }

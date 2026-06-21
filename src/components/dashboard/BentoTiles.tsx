@@ -1,34 +1,140 @@
 "use client";
-import { ListChecks, CalendarClock, Target, Wallet } from "lucide-react";
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { ListChecks, CalendarClock, Target, Wallet, Check, Loader2 } from "lucide-react";
 import { BentoCard, BentoHeader } from "@/components/ui/bento-card";
 import { CountUp } from "@/components/ui/count-up";
+import { useReducedMotion } from "@/lib/motion";
 import { URGENCY, URGENCY_ORDER } from "@/lib/ui";
+import { cn } from "@/lib/utils";
 import type { DailyBriefContent, TaskUrgency } from "@/lib/db/types";
 
-/** Tasks tile: open-task counts by urgency tier as tiny colored chips. */
-export function TasksTile({ counts }: { counts: Record<TaskUrgency, number> }) {
+export interface DashTask {
+  id: string;
+  title: string;
+  urgency: TaskUrgency;
+}
+
+/**
+ * Interactive Tasks tile: the top open tasks (by priority) are completable
+ * inline (PATCH /api/tasks/[id] → optimistic check + animate out → refresh),
+ * with a tier-count footer. Tap a row's circle to mark it done.
+ */
+export function TasksTile({
+  counts,
+  tasks,
+}: {
+  counts: Record<TaskUrgency, number>;
+  tasks: DashTask[];
+}) {
   const total = URGENCY_ORDER.reduce((s, k) => s + (counts[k] ?? 0), 0);
+  const [hidden, setHidden] = React.useState<Set<string>>(new Set());
+  const visible = tasks.filter((t) => !hidden.has(t.id));
+
   return (
     <BentoCard>
       <BentoHeader icon={ListChecks} title="Tasks" href="/tasks" />
       <div className="mb-3 text-2xl font-semibold text-foreground">
-        <CountUp value={total} animateOnMount={false} />
+        <CountUp value={Math.max(0, total - hidden.size)} animateOnMount={false} />
         <span className="ml-1.5 text-xs font-normal text-muted-foreground">open</span>
       </div>
+
+      {visible.length > 0 ? (
+        <ul className="mb-3 space-y-1.5">
+          <AnimatePresence initial={false}>
+            {visible.slice(0, 4).map((t) => (
+              <TaskRow key={t.id} task={t} onDone={() => setHidden((h) => new Set(h).add(t.id))} />
+            ))}
+          </AnimatePresence>
+        </ul>
+      ) : (
+        <p className="mb-3 text-xs text-muted-foreground">All clear — nice.</p>
+      )}
+
       <div className="flex flex-wrap gap-1.5">
         {URGENCY_ORDER.filter((k) => (counts[k] ?? 0) > 0).map((k) => (
           <span
             key={k}
-            className="inline-flex items-center gap-1.5 rounded-chip border border-white/5 bg-white/[0.03] px-2 py-1 text-xs"
+            className="inline-flex items-center gap-1.5 rounded-chip border border-border bg-accent/40 px-2 py-1 text-xs"
           >
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: URGENCY[k].hex }} />
             <span className="text-muted-foreground">{URGENCY[k].label}</span>
             <span className="font-mono tabular-nums text-foreground">{counts[k]}</span>
           </span>
         ))}
-        {total === 0 && <span className="text-xs text-muted-foreground">All clear.</span>}
       </div>
     </BentoCard>
+  );
+}
+
+/** A completable task row inside the Tasks tile. */
+function TaskRow({ task, onDone }: { task: DashTask; onDone: () => void }) {
+  const router = useRouter();
+  const reduced = useReducedMotion();
+  const [done, setDone] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const tier = URGENCY[task.urgency] ?? URGENCY.week;
+
+  async function complete() {
+    if (busy || done) return;
+    setBusy(true);
+    setDone(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setTimeout(() => {
+        onDone();
+        router.refresh();
+      }, reduced ? 0 : 300);
+    } catch {
+      setDone(false);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <motion.li
+      layout={!reduced}
+      initial={false}
+      animate={{ opacity: done ? 0.5 : 1 }}
+      exit={reduced ? undefined : { opacity: 0, height: 0 }}
+      transition={{ duration: 0.28 }}
+      className="flex items-center gap-2.5 rounded-panel border border-border bg-accent/30 px-2.5 py-2"
+    >
+      <button
+        type="button"
+        onClick={complete}
+        disabled={busy}
+        aria-label={`Complete ${task.title}`}
+        className={cn(
+          "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition-colors",
+          done
+            ? "border-positive bg-positive"
+            : "border-muted-foreground/40 hover:border-positive/60 hover:bg-positive/10"
+        )}
+      >
+        {busy && !done ? (
+          <Loader2 className="h-3 w-3 animate-spin text-violet" />
+        ) : done ? (
+          <Check className="h-3.5 w-3.5 text-black" strokeWidth={3} />
+        ) : (
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: tier.hex }} />
+        )}
+      </button>
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-sm",
+          done ? "text-muted-foreground line-through" : "text-foreground"
+        )}
+      >
+        {task.title}
+      </span>
+    </motion.li>
   );
 }
 
