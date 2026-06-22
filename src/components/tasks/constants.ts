@@ -7,6 +7,19 @@ export const CATEGORIES: TaskCategory[] = ["Work", "Learning", "Personal", "Busi
 export const URGENCIES: TaskUrgency[] = ["today", "week", "month", "someday"];
 export const STATUSES: TaskStatus[] = ["todo", "doing", "done"];
 
+/**
+ * Priority options for the `effort_score` column (int 1–5). Only the LABEL is
+ * renamed to "Priority" — the DB column / API field stays `effort_score`.
+ * 5 = highest priority.
+ */
+export const PRIORITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "1", label: "Priority 1 (low)" },
+  { value: "2", label: "Priority 2" },
+  { value: "3", label: "Priority 3" },
+  { value: "4", label: "Priority 4" },
+  { value: "5", label: "Priority 5 (high)" },
+];
+
 export const URGENCY_LABEL: Record<TaskUrgency, string> = {
   today: "Today",
   week: "This Week",

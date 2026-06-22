@@ -215,6 +215,8 @@ export function TaskBoard({
         <KanbanView
           tasks={filtered}
           goalTitle={goalTitle}
+          goals={goals}
+          projects={projects}
           dragId={dragId}
           overTier={overTier}
           reduced={reduced}
@@ -229,6 +231,8 @@ export function TaskBoard({
         <CategoryView
           tasks={filtered}
           goalTitle={goalTitle}
+          goals={goals}
+          projects={projects}
           dragId={dragId}
           reduced={reduced}
           onDragStart={setDragId}
@@ -241,6 +245,8 @@ export function TaskBoard({
         <ListView
           tasks={filtered}
           goalTitle={goalTitle}
+          goals={goals}
+          projects={projects}
           dragId={dragId}
           reduced={reduced}
           onDragStart={setDragId}
@@ -283,6 +289,8 @@ function ViewBtn({
 
 type CardProps = {
   goalTitle: (id: string | null) => string | undefined;
+  goals: Goal[];
+  projects: GoalProject[];
   dragId: string | null;
   reduced: boolean;
   onDragStart: (id: string) => void;
@@ -368,6 +376,8 @@ function KanbanView({
                 key={t.id}
                 task={t}
                 goalTitle={rest.goalTitle(t.goal_id)}
+                goals={rest.goals}
+                projects={rest.projects}
                 onDragStart={rest.onDragStart}
                 onDragEnd={rest.onDragEnd}
                 onPatch={rest.onPatch}
@@ -406,6 +416,8 @@ function ListView({
           key={t.id}
           task={t}
           goalTitle={rest.goalTitle(t.goal_id)}
+          goals={rest.goals}
+          projects={rest.projects}
           onDragStart={rest.onDragStart}
           onDragEnd={rest.onDragEnd}
           onPatch={rest.onPatch}
@@ -448,6 +460,8 @@ function CategoryView({
                 key={t.id}
                 task={t}
                 goalTitle={rest.goalTitle(t.goal_id)}
+                goals={rest.goals}
+                projects={rest.projects}
                 onDragStart={rest.onDragStart}
                 onDragEnd={rest.onDragEnd}
                 onPatch={rest.onPatch}

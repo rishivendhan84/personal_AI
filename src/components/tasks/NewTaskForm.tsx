@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
-import type { Goal, GoalProject, Task, TaskCategory, TaskUrgency } from "@/lib/db/types";
+import { Plus, X } from "lucide-react";
+import type { Goal, GoalProject, GoalType, Task, TaskCategory, TaskUrgency } from "@/lib/db/types";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { CATEGORIES, URGENCIES, URGENCY_LABEL } from "./constants";
+import { CATEGORIES, PRIORITY_OPTIONS, URGENCIES, URGENCY_LABEL } from "./constants";
 
 /**
  * Inline task creator. Optional goal + project picker (PRD §7.4) — projects are
  * filtered to the chosen goal. Kept collapsible so the board stays uncluttered.
+ * Supports creating a goal inline so capture never breaks flow.
  */
 export function NewTaskForm({
   goals,
@@ -26,11 +27,21 @@ export function NewTaskForm({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TaskCategory>("Personal");
   const [urgency, setUrgency] = useState<TaskUrgency>("week");
-  const [effort, setEffort] = useState<string>("");
+  const [priority, setPriority] = useState<string>("");
   const [dueDate, setDueDate] = useState("");
   const [goalId, setGoalId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Local goals list so a freshly-created goal can be appended + auto-selected.
+  const [localGoals, setLocalGoals] = useState<Goal[]>(goals);
+  useEffect(() => setLocalGoals(goals), [goals]);
+
+  // Inline "new goal" mini-form state.
+  const [goalFormOpen, setGoalFormOpen] = useState(false);
+  const [newGoalTitle, setNewGoalTitle] = useState("");
+  const [newGoalType, setNewGoalType] = useState<GoalType>("weekly");
+  const [creatingGoal, setCreatingGoal] = useState(false);
 
   // Projects shown depend on the chosen goal; clear stale project on goal change.
   const goalProjects = useMemo(
@@ -38,6 +49,34 @@ export function NewTaskForm({
     [projects, goalId]
   );
   useEffect(() => setProjectId(""), [goalId]);
+
+  async function createGoal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newGoalTitle.trim()) return;
+    setCreatingGoal(true);
+    try {
+      const res = await fetch("/api/goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newGoalTitle.trim(),
+          type: newGoalType,
+          period_start: new Date().toISOString().slice(0, 10),
+        }),
+      });
+      const json = await res.json();
+      if (json.ok && json.data?.goal) {
+        const goal = json.data.goal as Goal;
+        setLocalGoals((prev) => [goal, ...prev]);
+        setGoalId(goal.id); // auto-select the new goal
+        setNewGoalTitle("");
+        setNewGoalType("weekly");
+        setGoalFormOpen(false);
+      }
+    } finally {
+      setCreatingGoal(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +91,7 @@ export function NewTaskForm({
           description,
           category,
           urgency,
-          effort_score: effort ? Number(effort) : null,
+          effort_score: priority ? Number(priority) : null,
           due_date: dueDate || null,
           goal_id: goalId || null,
           project_id: projectId || null,
@@ -64,7 +103,7 @@ export function NewTaskForm({
         // Reset for the next quick capture; keep category/urgency sticky.
         setTitle("");
         setDescription("");
-        setEffort("");
+        setPriority("");
         setDueDate("");
         setGoalId("");
         setProjectId("");
@@ -116,12 +155,12 @@ export function NewTaskForm({
           options={URGENCIES.map((u) => ({ value: u, label: URGENCY_LABEL[u] }))}
         />
         <Select
-          aria-label="Effort"
-          className="w-28"
-          placeholder="Effort"
-          value={effort}
-          onChange={(v) => setEffort(v)}
-          options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: `Effort ${n}` }))}
+          aria-label="Priority"
+          className="w-40"
+          placeholder="Priority"
+          value={priority}
+          onChange={(v) => setPriority(v)}
+          options={PRIORITY_OPTIONS}
         />
         <Input
           type="date"
@@ -131,7 +170,7 @@ export function NewTaskForm({
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Select
           aria-label="Goal"
           className="w-full sm:w-44"
@@ -139,9 +178,19 @@ export function NewTaskForm({
           onChange={(v) => setGoalId(v)}
           options={[
             { value: "", label: "No goal" },
-            ...goals.map((g) => ({ value: g.id, label: g.title })),
+            ...localGoals.map((g) => ({ value: g.id, label: g.title })),
           ]}
         />
+        {!goalFormOpen && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setGoalFormOpen(true)}
+          >
+            <Plus className="h-4 w-4" /> New goal
+          </Button>
+        )}
         <Select
           aria-label="Project"
           className="w-full sm:w-44"
@@ -154,6 +203,51 @@ export function NewTaskForm({
           ]}
         />
       </div>
+
+      {goalFormOpen && (
+        <div className="flex flex-wrap items-center gap-2 rounded-panel border border-border bg-accent/40 p-2">
+          <Input
+            autoFocus
+            placeholder="New goal title"
+            value={newGoalTitle}
+            onChange={(e) => setNewGoalTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") createGoal(e);
+            }}
+            className="min-w-[10rem] flex-1"
+          />
+          <Select
+            aria-label="Goal type"
+            className="w-32"
+            value={newGoalType}
+            onChange={(v) => setNewGoalType(v as GoalType)}
+            options={[
+              { value: "weekly", label: "Weekly" },
+              { value: "monthly", label: "Monthly" },
+            ]}
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={createGoal}
+            disabled={creatingGoal || !newGoalTitle.trim()}
+          >
+            {creatingGoal ? "Adding…" : "Add goal"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label="Cancel new goal"
+            onClick={() => {
+              setGoalFormOpen(false);
+              setNewGoalTitle("");
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={saving || !title.trim()}>
