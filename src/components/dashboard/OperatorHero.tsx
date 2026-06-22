@@ -1,14 +1,12 @@
 "use client";
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   Crosshair,
   CalendarClock,
   Flame,
   CheckCircle2,
-  Check,
   Loader2,
   Pencil,
 } from "lucide-react";
@@ -20,26 +18,20 @@ import { Input } from "@/components/ui/input";
 import { Clock } from "./Clock";
 import { HeroHabitChips, type DashHabit } from "./HabitsTile";
 import { QuickAddTask } from "./QuickAddTask";
-import { URGENCY, USER_TZ, greeting } from "@/lib/ui";
-import { useReducedMotion } from "@/lib/motion";
-import { cn } from "@/lib/utils";
-import type { DailyBriefContent, TaskUrgency } from "@/lib/db/types";
-
-type Top3Item = DailyBriefContent["top3"][number] & { urgency?: TaskUrgency };
+import { USER_TZ, greeting } from "@/lib/ui";
+import type { DailyBriefContent } from "@/lib/db/types";
 
 /**
- * The Operator hero — the showpiece of the dashboard. Spans 2×2, carries the
- * spotlight + at-rest glow, an editorial serif greeting (revealed once), a live
- * clock, focus/location chips, AI-ranked top-3, a calendar peek, habit dots, and
- * count-up stats. Pure presentational client component; data comes from the
- * cached brief read server-side.
+ * The Operator hero — the showpiece of the dashboard. Spans 2×2: an editorial
+ * serif greeting, a live clock, an editable focus, quick-capture, a calendar
+ * peek, habit chips, and count-up stats. (Task priorities live in the Tasks
+ * card.) Pure presentational client component; data is read server-side.
  */
 export function OperatorHero({
   name,
   focus,
   location,
   timeZone = USER_TZ,
-  top3,
   calendar,
   habits,
   tasksDoneToday,
@@ -49,7 +41,6 @@ export function OperatorHero({
   focus: string | null;
   location: string | null;
   timeZone?: string;
-  top3: Top3Item[];
   calendar: DailyBriefContent["calendar"];
   habits: DashHabit[];
   tasksDoneToday: number;
@@ -84,31 +75,11 @@ export function OperatorHero({
             )}
           </div>
 
-          {/* Top-3 AI-ranked tasks — completable inline */}
-          <div className="min-w-0 flex-1">
-            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Today&apos;s priorities
-            </p>
-            {top3.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nothing ranked yet — capture a task to get going.
-              </p>
-            ) : (
-              <ol className="space-y-2.5">
-                <AnimatePresence initial={false}>
-                  {top3.map((t, i) => (
-                    <Top3Row key={t.id} task={t} index={i} />
-                  ))}
-                </AnimatePresence>
-              </ol>
-            )}
-          </div>
-
           {/* Quick-add — always-visible capture */}
           <QuickAddTask />
 
-          {/* Calendar peek + habit dots */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Calendar peek + habit dots (fills the hero's height) */}
+          <div className="grid flex-1 grid-cols-1 content-start gap-4 sm:grid-cols-2">
             <div>
               <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 <CalendarClock className="h-3.5 w-3.5 text-violet" />
@@ -160,99 +131,6 @@ export function OperatorHero({
         </div>
       </Spotlight>
     </BentoCard>
-  );
-}
-
-/**
- * A single top-3 priority row with an inline circular complete control. Click →
- * PATCH /api/tasks/[id] { status: "done" } → optimistic check + animate out →
- * router.refresh(). Big tap target on phone.
- */
-function Top3Row({ task, index }: { task: Top3Item; index: number }) {
-  const router = useRouter();
-  const reduced = useReducedMotion();
-  const [done, setDone] = React.useState(false);
-  const [busy, setBusy] = React.useState(false);
-
-  const tier = (task.urgency && URGENCY[task.urgency]) || URGENCY.week;
-  const hex = tier?.hex ?? "#7C5CFC";
-
-  async function complete(e: React.MouseEvent) {
-    e.preventDefault();
-    if (busy || done) return;
-    setBusy(true);
-    setDone(true); // optimistic check
-    try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "done" }),
-      });
-      if (!res.ok) throw new Error(String(res.status));
-      // Let the check-off read, then refresh so the brief/counts re-derive.
-      setTimeout(() => router.refresh(), reduced ? 0 : 320);
-    } catch {
-      setDone(false);
-      setBusy(false);
-    }
-  }
-
-  return (
-    <motion.li
-      layout={!reduced}
-      initial={false}
-      animate={done ? { opacity: 0.55 } : { opacity: 1 }}
-      exit={reduced ? undefined : { opacity: 0, height: 0, marginTop: 0 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex items-start gap-3 overflow-hidden rounded-panel border border-foreground/5 bg-foreground/[0.02] py-2.5 pl-4 pr-3"
-    >
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px]"
-        style={{ background: hex, boxShadow: `0 0 12px ${hex}` }}
-      />
-      <button
-        type="button"
-        onClick={complete}
-        disabled={busy}
-        aria-label={`Complete ${task.title}`}
-        className={cn(
-          "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors",
-          done
-            ? "border-positive bg-positive shadow-[0_0_10px_rgba(74,222,128,0.5)]"
-            : "border-foreground/20 bg-foreground/[0.03] hover:border-positive/60 hover:bg-positive/10"
-        )}
-      >
-        {busy && !done ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-violet" />
-        ) : done ? (
-          <motion.span
-            initial={reduced ? false : { scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 18 }}
-          >
-            <Check className="h-4 w-4 text-black" strokeWidth={3} />
-          </motion.span>
-        ) : (
-          <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        )}
-      </button>
-      <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "truncate text-sm font-medium leading-snug",
-            done ? "text-muted-foreground line-through" : "text-foreground"
-          )}
-        >
-          {task.title}
-        </p>
-        {task.reason && (
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{task.reason}</p>
-        )}
-      </div>
-    </motion.li>
   );
 }
 

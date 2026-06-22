@@ -26,6 +26,7 @@ import {
 import { HabitsTile, type DashHabit } from "@/components/dashboard/HabitsTile";
 import { NutritionTile } from "@/components/dashboard/NutritionTile";
 import { FocusTile } from "@/components/dashboard/FocusTile";
+import { LifeRadar, type RadarDatum } from "@/components/dashboard/LifeRadar";
 import { QuickAddTask } from "@/components/dashboard/QuickAddTask";
 import { GenerateBriefButton } from "@/components/dashboard/GenerateBriefButton";
 import { BentoCard } from "@/components/ui/bento-card";
@@ -84,6 +85,7 @@ export default async function DashboardPage() {
     habits,
     goals,
     topTasks,
+    lifeScores,
   ] = await Promise.all([
     getLatestBrief(),
     todayEvents(db, todayKey),
@@ -95,6 +97,7 @@ export default async function DashboardPage() {
     habitsWithTodayState(db, todayKey),
     dashboardGoals(db),
     topOpenTasks(db),
+    lifeRadar(db, tz),
   ]);
   void events; // (kept for future use; calendar tile reads the brief's list)
 
@@ -107,11 +110,6 @@ export default async function DashboardPage() {
     user.current_focus.trim().toLowerCase() !== "ship the paios vertical slice"
       ? user.current_focus
       : null;
-  // Hero top-3 comes from LIVE open tasks (excludes done) so completed items
-  // disappear immediately and never reappear from a cached brief.
-  const heroTop3 = topTasks
-    .slice(0, 3)
-    .map((t) => ({ id: t.id, title: t.title, reason: "", urgency: t.urgency }));
 
   if (!brief) {
     // No brief yet — still a working surface: quick-add tasks and complete
@@ -143,11 +141,12 @@ export default async function DashboardPage() {
           </BentoCard>
           <FocusTile />
           <HabitsTile habits={habits} bestStreak={bestStreak} />
-          <TasksTile counts={taskCounts} tasks={topTasks} span="sm:col-span-2" />
+          <TasksTile counts={taskCounts} tasks={topTasks} />
           <GoalsTile goals={goals} />
           <NutritionTile calories={nutrition.calories} target={nutrition.target} />
           <CalendarTile calendar={[]} timeZone={tz} />
           <FinanceTile netWorth={netWorth} />
+          <LifeRadar data={lifeScores} />
         </BentoGrid>
       </div>
     );
@@ -165,7 +164,6 @@ export default async function DashboardPage() {
           focus={user?.current_focus ?? null}
           location={user?.current_location ?? null}
           timeZone={tz}
-          top3={heroTop3}
           calendar={c.calendar}
           habits={habits}
           tasksDoneToday={tasksDoneToday}
@@ -173,11 +171,12 @@ export default async function DashboardPage() {
         />
         <FocusTile />
         <HabitsTile habits={habits} bestStreak={bestStreak} />
-        <TasksTile counts={taskCounts} tasks={topTasks} span="sm:col-span-2" />
+        <TasksTile counts={taskCounts} tasks={topTasks} />
         <GoalsTile goals={goals} />
         <NutritionTile calories={nutrition.calories} target={nutrition.target} />
         <CalendarTile calendar={c.calendar} timeZone={tz} />
         <FinanceTile netWorth={netWorth} />
+        <LifeRadar data={lifeScores} />
       </BentoGrid>
     </div>
   );
@@ -303,6 +302,72 @@ async function topOpenTasks(db: Db): Promise<DashTask[]> {
     return (data ?? []) as DashTask[];
   } catch {
     return [];
+  }
+}
+
+/**
+ * Life Radar scores (0-100) across five dimensions, derived deterministically:
+ * Career/Learning/Business = % of that task category completed; Health = 7-day
+ * habit completion rate; Finance = savings rate (or net-worth presence).
+ */
+async function lifeRadar(db: Db, tz: string): Promise<RadarDatum[]> {
+  try {
+    const [tasksRes, habitsRes, logsRes, finRes] = await Promise.all([
+      db.from("tasks").select("category, status"),
+      db.from("habits").select("id", { count: "exact", head: true }).eq("active", true),
+      db.from("habit_logs").select("log_date"),
+      db
+        .from("finance_snapshots")
+        .select("savings_rate, net_worth")
+        .order("snapshot_date", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ savings_rate: number | null; net_worth: number | null }>(),
+    ]);
+
+    const tasks = (tasksRes.data ?? []) as { category: string; status: string }[];
+    const pctDone = (cat: string): number => {
+      const inCat = tasks.filter((t) => t.category === cat);
+      if (inCat.length === 0) return 0;
+      return Math.round((inCat.filter((t) => t.status === "done").length / inCat.length) * 100);
+    };
+
+    // Health: completion rate across active habits over the last 7 days.
+    const activeHabits = habitsRes.count ?? 0;
+    const last7 = new Set<string>();
+    const now = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      last7.add(dateKeyInTz(d, tz));
+    }
+    const logs = (logsRes.data ?? []) as { log_date: string }[];
+    const recent = logs.filter((l) => last7.has(l.log_date)).length;
+    const health = activeHabits > 0 ? Math.min(100, Math.round((recent / (activeHabits * 7)) * 100)) : 0;
+
+    // Finance: savings rate → %, else a midpoint when net worth is positive.
+    const fin = finRes.data;
+    const finance =
+      fin?.savings_rate != null
+        ? Math.min(100, Math.max(0, Math.round(fin.savings_rate * 100)))
+        : fin?.net_worth && fin.net_worth > 0
+          ? 50
+          : 0;
+
+    return [
+      { label: "Career", value: pctDone("Work") },
+      { label: "Health", value: health },
+      { label: "Learning", value: pctDone("Learning") },
+      { label: "Finance", value: finance },
+      { label: "Business", value: pctDone("Business") },
+    ];
+  } catch {
+    return [
+      { label: "Career", value: 0 },
+      { label: "Health", value: 0 },
+      { label: "Learning", value: 0 },
+      { label: "Finance", value: 0 },
+      { label: "Business", value: 0 },
+    ];
   }
 }
 

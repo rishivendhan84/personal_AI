@@ -24,18 +24,16 @@ export interface DashTask {
 export function TasksTile({
   counts,
   tasks,
-  span,
 }: {
   counts: Record<TaskUrgency, number>;
   tasks: DashTask[];
-  span?: string;
 }) {
   const total = URGENCY_ORDER.reduce((s, k) => s + (counts[k] ?? 0), 0);
   const [hidden, setHidden] = React.useState<Set<string>>(new Set());
   const visible = tasks.filter((t) => !hidden.has(t.id));
 
   return (
-    <BentoCard span={span}>
+    <BentoCard>
       <BentoHeader icon={ListChecks} title="Tasks" href="/tasks" />
       <div className="mb-3 text-2xl font-semibold text-foreground">
         <CountUp value={Math.max(0, total - hidden.size)} animateOnMount={false} />
@@ -43,9 +41,10 @@ export function TasksTile({
       </div>
 
       {visible.length > 0 ? (
-        <ul className="mb-3 space-y-1.5">
+        // Scrolls after ~4 rows so the tile keeps a consistent height.
+        <ul className="mb-3 max-h-[188px] space-y-1.5 overflow-y-auto pr-1">
           <AnimatePresence initial={false}>
-            {visible.slice(0, span ? 6 : 4).map((t) => (
+            {visible.map((t) => (
               <TaskRow key={t.id} task={t} onDone={() => setHidden((h) => new Set(h).add(t.id))} />
             ))}
           </AnimatePresence>

@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { MODES, type FocusMode, type FocusPhase } from "@/lib/focus";
 
 /**
@@ -104,6 +105,7 @@ function notify(title: string, body: string) {
 }
 
 export function FocusProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [state, setState] = React.useState<FocusState>(loadInitial);
   const stateRef = React.useRef(state);
   stateRef.current = state;
@@ -122,6 +124,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
     chime();
     if (s.phase === "focus") {
       // Log the completed focus block (best-effort; degrades if table missing).
+      // If logging auto-completes the Deep Work habit, refresh so the tick shows.
       void fetch("/api/focus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,7 +133,12 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
           minutes: MODES[s.mode].focusMin,
           task_title: s.taskTitle,
         }),
-      }).catch(() => {});
+      })
+        .then((r) => r.json())
+        .then((j) => {
+          if (j?.data?.autoCompletedDeepWork) router.refresh();
+        })
+        .catch(() => {});
       notify("Focus complete 🎯", `Nice — take a ${MODES[s.mode].breakMin} min break.`);
       const breakLen = phaseMs(s.mode, "break");
       setState({ ...s, phase: "break", running: true, endsAt: Date.now() + breakLen, remainingMs: breakLen });
@@ -144,7 +152,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
         remainingMs: phaseMs(s.mode, "focus"),
       });
     }
-  }, []);
+  }, [router]);
 
   // Tick loop (250ms → smooth hourglass + second display).
   React.useEffect(() => {

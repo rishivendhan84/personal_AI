@@ -50,16 +50,23 @@ export function Select({
     const r = el.getBoundingClientRect();
     const spaceBelow = window.innerHeight - r.bottom;
     const spaceAbove = r.top;
-    const desired = Math.min(260, options.length * 38 + 10);
+    const desired = Math.min(260, options.length * 40 + 12);
     const up = spaceBelow < desired && spaceAbove > spaceBelow;
     setPos({
       left: r.left,
       top: up ? r.top : r.bottom,
       width: r.width,
       up,
-      maxH: Math.max(140, (up ? spaceAbove : spaceBelow) - 12),
+      maxH: Math.max(160, (up ? spaceAbove : spaceBelow) - 12),
     });
   }, [options.length]);
+
+  // Open with position computed synchronously so the panel is never a null frame.
+  const openMenu = React.useCallback(() => {
+    if (disabled) return;
+    place();
+    setOpen(true);
+  }, [disabled, place]);
 
   // Reposition while open (scroll/resize) and close on outside click.
   React.useEffect(() => {
@@ -98,7 +105,7 @@ export function Select({
     if (!open) {
       if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
         e.preventDefault();
-        setOpen(true);
+        openMenu();
       }
       return;
     }
@@ -175,7 +182,7 @@ export function Select({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
-        onClick={() => !disabled && setOpen((o) => !o)}
+        onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={onKeyDown}
         className={cn(
           "flex h-9 w-full items-center justify-between gap-2 rounded-chip border border-foreground/10 bg-foreground/[0.03] px-3 text-sm outline-none transition-colors hover:bg-foreground/[0.06] focus-visible:border-violet/60 focus-visible:ring-1 focus-visible:ring-violet/40 disabled:cursor-not-allowed disabled:opacity-50",

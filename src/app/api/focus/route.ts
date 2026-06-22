@@ -64,9 +64,46 @@ export const POST = route(async (req: Request) => {
       .select("*")
       .single();
     if (error) throw error;
-    return ok({ session: data as FocusSession });
+
+    // Auto-complete the "Deep Work" habit once ≥2h of Deep Work (incl. breaks)
+    // is logged today — the habit's daily target.
+    let autoCompletedDeepWork = false;
+    if (mode === "deep") {
+      autoCompletedDeepWork = await maybeTickDeepWork(db);
+    }
+
+    return ok({ session: data as FocusSession, autoCompletedDeepWork });
   } catch (e) {
     console.warn("[PAIOS:focus] insert degraded (table missing?):", e);
     return ok({ skipped: true });
   }
 });
+
+/** Sum today's Deep Work time (focus + break) and tick the habit at ≥120 min. */
+async function maybeTickDeepWork(db: NonNullable<ReturnType<typeof getAdminClient>>): Promise<boolean> {
+  try {
+    const todayKey = dateKeyInTz(new Date(), DEFAULT_TZ);
+    const { data } = await db.from("focus_sessions").select("minutes, completed_at").eq("mode", "deep");
+    const today = ((data ?? []) as { minutes: number; completed_at: string }[]).filter(
+      (r) => dateKeyInTz(new Date(r.completed_at), DEFAULT_TZ) === todayKey
+    );
+    const totalWithBreaks =
+      today.reduce((s, r) => s + (r.minutes ?? 0), 0) + today.length * MODES.deep.breakMin;
+    if (totalWithBreaks < 120) return false;
+
+    const { data: habit } = await db
+      .from("habits")
+      .select("id")
+      .ilike("name", "%deep work%")
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+    if (!habit) return false;
+    await db
+      .from("habit_logs")
+      .upsert({ habit_id: habit.id, log_date: todayKey }, { onConflict: "habit_id,log_date" });
+    return true;
+  } catch {
+    return false;
+  }
+}
