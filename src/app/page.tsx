@@ -167,7 +167,6 @@ export default async function DashboardPage() {
           location={user?.current_location ?? null}
           timeZone={tz}
           calendar={c.calendar}
-          habits={habits}
           tasksDoneToday={tasksDoneToday}
           bestStreak={bestStreak}
           radar={lifeScores}

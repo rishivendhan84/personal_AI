@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Radar } from "lucide-react";
 import { BentoCard, BentoHeader } from "@/components/ui/bento-card";
 import { useReducedMotion, DUR } from "@/lib/motion";
-import { cn } from "@/lib/utils";
 
 export interface RadarDatum {
   label: string;
@@ -166,30 +165,6 @@ export function RadarChart({ data }: { data: RadarDatum[] }): React.JSX.Element 
           </g>
         </svg>
       </div>
-
-      {/* Legend */}
-      <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
-        {data.map((d, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-2 text-sm text-muted-foreground"
-          >
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: i % 2 === 0 ? VIOLET : CYAN }}
-              aria-hidden
-            />
-            <span className="truncate">{d.label}</span>
-            <span
-              className={cn(
-                "ml-auto font-mono tabular-nums text-foreground/80"
-              )}
-            >
-              {clamp(d.value)}
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
