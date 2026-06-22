@@ -1,10 +1,8 @@
 "use client";
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useReducedMotion } from "@/lib/motion";
 
 export interface SelectOption {
   value: string;
@@ -13,10 +11,10 @@ export interface SelectOption {
 }
 
 /**
- * Dark-mode-visible dropdown. The option list renders in a PORTAL with fixed
- * positioning so it's never clipped by an `overflow-hidden` ancestor (that bug
- * made the last option unclickable) and flips upward near the viewport edge.
- * Keyboard nav, click-outside, reduced-motion aware.
+ * Dark/light-visible dropdown. The option list renders in a PORTAL on
+ * document.body with fixed positioning computed at open time, so it's never
+ * clipped by an `overflow-hidden`/transformed ancestor and never a null frame.
+ * Opaque `bg-card` + high z-index guarantee visibility. Keyboard + click-out.
  */
 export function Select({
   value,
@@ -35,12 +33,18 @@ export function Select({
   className?: string;
   "aria-label"?: string;
 }) {
-  const reduced = useReducedMotion();
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
-  const [pos, setPos] = React.useState<{ left: number; top: number; width: number; up: boolean; maxH: number } | null>(null);
+  const [pos, setPos] = React.useState<{
+    left: number;
+    top: number;
+    width: number;
+    maxH: number;
+  } | null>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const panelRef = React.useRef<HTMLUListElement>(null);
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   const selected = options.find((o) => o.value === value);
 
@@ -50,50 +54,42 @@ export function Select({
     const r = el.getBoundingClientRect();
     const spaceBelow = window.innerHeight - r.bottom;
     const spaceAbove = r.top;
-    const desired = Math.min(260, options.length * 40 + 12);
-    const up = spaceBelow < desired && spaceAbove > spaceBelow;
+    const wantH = Math.min(280, options.length * 40 + 10);
+    const openUp = spaceBelow < wantH && spaceAbove > spaceBelow;
+    const maxH = Math.max(140, (openUp ? spaceAbove : spaceBelow) - 12);
+    const h = Math.min(wantH, maxH);
     setPos({
       left: r.left,
-      top: up ? r.top : r.bottom,
+      top: openUp ? r.top - h - 6 : r.bottom + 6,
       width: r.width,
-      up,
-      maxH: Math.max(160, (up ? spaceAbove : spaceBelow) - 12),
+      maxH,
     });
   }, [options.length]);
 
-  // Open with position computed synchronously so the panel is never a null frame.
   const openMenu = React.useCallback(() => {
     if (disabled) return;
     place();
+    setActive(Math.max(0, options.findIndex((o) => o.value === value)));
     setOpen(true);
-  }, [disabled, place]);
+  }, [disabled, place, options, value]);
 
-  // Reposition while open (scroll/resize) and close on outside click.
   React.useEffect(() => {
     if (!open) return;
-    place();
-    const onScroll = () => place();
+    const reposition = () => place();
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
       if (triggerRef.current?.contains(t) || panelRef.current?.contains(t)) return;
       setOpen(false);
     };
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
     document.addEventListener("mousedown", onDown);
     return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
       document.removeEventListener("mousedown", onDown);
     };
   }, [open, place]);
-
-  React.useEffect(() => {
-    if (open) {
-      const i = options.findIndex((o) => o.value === value);
-      setActive(i >= 0 ? i : 0);
-    }
-  }, [open, value, options]);
 
   const choose = (v: string) => {
     onChange(v);
@@ -126,25 +122,20 @@ export function Select({
   };
 
   const panel =
-    open && pos && typeof document !== "undefined"
+    open && pos && mounted
       ? createPortal(
-          <motion.ul
+          <ul
             ref={panelRef}
             role="listbox"
-            initial={reduced ? false : { opacity: 0, y: pos.up ? 4 : -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, y: pos.up ? 4 : -4 }}
-            transition={{ duration: 0.12 }}
             style={{
               position: "fixed",
               left: pos.left,
+              top: pos.top,
               width: pos.width,
               maxHeight: pos.maxH,
-              ...(pos.up
-                ? { bottom: window.innerHeight - pos.top + 6 }
-                : { top: pos.top + 6 }),
+              zIndex: 9999,
             }}
-            className="z-[100] overflow-auto rounded-panel border border-foreground/10 bg-card/95 p-1 shadow-glow-violet backdrop-blur-xl"
+            className="overflow-auto rounded-panel border border-border bg-card p-1 shadow-2xl ring-1 ring-black/5 animate-fade-up"
           >
             {options.map((o, i) => {
               const isSelected = o.value === value;
@@ -158,8 +149,7 @@ export function Select({
                     onClick={() => !o.disabled && choose(o.value)}
                     className={cn(
                       "flex w-full items-center justify-between gap-2 rounded-[8px] px-2.5 py-2 text-left text-sm transition-colors disabled:opacity-40",
-                      isActive ? "bg-violet/15 text-foreground" : "text-foreground/90",
-                      "hover:bg-violet/15"
+                      isActive ? "bg-violet/15 text-foreground" : "text-foreground/90 hover:bg-violet/10"
                     )}
                   >
                     <span className="truncate">{o.label}</span>
@@ -168,7 +158,7 @@ export function Select({
                 </li>
               );
             })}
-          </motion.ul>,
+          </ul>,
           document.body
         )
       : null;
@@ -197,7 +187,7 @@ export function Select({
           )}
         />
       </button>
-      <AnimatePresence>{panel}</AnimatePresence>
+      {panel}
     </div>
   );
 }

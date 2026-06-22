@@ -26,7 +26,7 @@ import {
 import { HabitsTile, type DashHabit } from "@/components/dashboard/HabitsTile";
 import { NutritionTile } from "@/components/dashboard/NutritionTile";
 import { FocusTile } from "@/components/dashboard/FocusTile";
-import { LifeRadar, type RadarDatum } from "@/components/dashboard/LifeRadar";
+import { RadarChart, type RadarDatum } from "@/components/dashboard/LifeRadar";
 import { QuickAddTask } from "@/components/dashboard/QuickAddTask";
 import { GenerateBriefButton } from "@/components/dashboard/GenerateBriefButton";
 import { BentoCard } from "@/components/ui/bento-card";
@@ -137,6 +137,9 @@ export default async function DashboardPage() {
                 </p>
                 <QuickAddTask />
               </div>
+              <div className="w-full max-w-sm">
+                <RadarChart data={lifeScores} />
+              </div>
             </div>
           </BentoCard>
           <FocusTile />
@@ -146,7 +149,6 @@ export default async function DashboardPage() {
           <NutritionTile calories={nutrition.calories} target={nutrition.target} />
           <CalendarTile calendar={[]} timeZone={tz} />
           <FinanceTile netWorth={netWorth} />
-          <LifeRadar data={lifeScores} />
         </BentoGrid>
       </div>
     );
@@ -168,6 +170,7 @@ export default async function DashboardPage() {
           habits={habits}
           tasksDoneToday={tasksDoneToday}
           bestStreak={bestStreak}
+          radar={lifeScores}
         />
         <FocusTile />
         <HabitsTile habits={habits} bestStreak={bestStreak} />
@@ -176,7 +179,6 @@ export default async function DashboardPage() {
         <NutritionTile calories={nutrition.calories} target={nutrition.target} />
         <CalendarTile calendar={c.calendar} timeZone={tz} />
         <FinanceTile netWorth={netWorth} />
-        <LifeRadar data={lifeScores} />
       </BentoGrid>
     </div>
   );

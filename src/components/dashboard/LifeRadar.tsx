@@ -46,18 +46,16 @@ function polygonPoints(n: number, radii: number[]): string {
     .join(" ");
 }
 
-export function LifeRadar({ data }: { data: RadarDatum[] }): React.JSX.Element {
+/** Bare radar chart + legend (no card chrome) — embeddable anywhere. */
+export function RadarChart({ data }: { data: RadarDatum[] }): React.JSX.Element {
   const reduced = useReducedMotion();
   const n = data.length;
 
   if (n < 3) {
     return (
-      <BentoCard>
-        <BentoHeader icon={Radar} title="Life Radar" />
-        <p className="text-sm text-muted-foreground">
-          Add at least 3 dimensions to render the radar.
-        </p>
-      </BentoCard>
+      <p className="text-sm text-muted-foreground">
+        Add at least 3 dimensions to render the radar.
+      </p>
     );
   }
 
@@ -66,9 +64,7 @@ export function LifeRadar({ data }: { data: RadarDatum[] }): React.JSX.Element {
   const dataPoints = polygonPoints(n, dataRadii);
 
   return (
-    <BentoCard>
-      <BentoHeader icon={Radar} title="Life Radar" />
-
+    <div>
       <div className="mx-auto w-full max-w-[360px]">
         <svg
           viewBox={`0 0 ${VIEW} ${VIEW}`}
@@ -194,6 +190,16 @@ export function LifeRadar({ data }: { data: RadarDatum[] }): React.JSX.Element {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Card-wrapped radar (kept for standalone use). */
+export function LifeRadar({ data }: { data: RadarDatum[] }): React.JSX.Element {
+  return (
+    <BentoCard>
+      <BentoHeader icon={Radar} title="Life Radar" />
+      <RadarChart data={data} />
     </BentoCard>
   );
 }

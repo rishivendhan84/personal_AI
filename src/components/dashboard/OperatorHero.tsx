@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Loader2,
   Pencil,
+  Radar,
 } from "lucide-react";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Spotlight } from "@/components/ui/spotlight";
@@ -18,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Clock } from "./Clock";
 import { HeroHabitChips, type DashHabit } from "./HabitsTile";
 import { QuickAddTask } from "./QuickAddTask";
+import { RadarChart, type RadarDatum } from "./LifeRadar";
 import { USER_TZ, greeting } from "@/lib/ui";
 import type { DailyBriefContent } from "@/lib/db/types";
 
@@ -36,6 +38,7 @@ export function OperatorHero({
   habits,
   tasksDoneToday,
   bestStreak,
+  radar,
 }: {
   name: string;
   focus: string | null;
@@ -45,6 +48,7 @@ export function OperatorHero({
   habits: DashHabit[];
   tasksDoneToday: number;
   bestStreak: number;
+  radar: RadarDatum[];
 }) {
   const hello = greeting(new Date(), timeZone);
   const nextEvents = calendar.slice(0, 3);
@@ -78,39 +82,49 @@ export function OperatorHero({
           {/* Quick-add — always-visible capture */}
           <QuickAddTask />
 
-          {/* Calendar peek + habit dots (fills the hero's height) */}
-          <div className="grid flex-1 grid-cols-1 content-start gap-4 sm:grid-cols-2">
-            <div>
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                <CalendarClock className="h-3.5 w-3.5 text-violet" />
-                Up next
-              </p>
-              {nextEvents.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No events today.</p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {nextEvents.map((e, i) => (
-                    <li key={`${e.title}-${i}`} className="flex items-baseline gap-2 text-sm">
-                      <span className="w-14 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                        {fmtTime(e.start_at, timeZone)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-foreground">{e.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div>
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                <CheckCircle2 className="h-3.5 w-3.5 text-positive" />
-                Habits
-                {habits.length > 0 && (
-                  <span className="font-mono tabular-nums text-muted-foreground/70">
-                    {habitsDone}/{habits.length}
-                  </span>
+          {/* Left: calendar peek + habits · Right: Life radar (fills hero height) */}
+          <div className="grid flex-1 items-start gap-5 lg:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <CalendarClock className="h-3.5 w-3.5 text-violet" />
+                  Up next
+                </p>
+                {nextEvents.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No events today.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {nextEvents.map((e, i) => (
+                      <li key={`${e.title}-${i}`} className="flex items-baseline gap-2 text-sm">
+                        <span className="w-14 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                          {fmtTime(e.start_at, timeZone)}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-foreground">{e.title}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
+              </div>
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-positive" />
+                  Habits
+                  {habits.length > 0 && (
+                    <span className="font-mono tabular-nums text-muted-foreground/70">
+                      {habitsDone}/{habits.length}
+                    </span>
+                  )}
+                </p>
+                <HeroHabitChips habits={habits} />
+              </div>
+            </div>
+
+            <div className="min-w-0">
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <Radar className="h-3.5 w-3.5 text-violet" />
+                Life radar
               </p>
-              <HeroHabitChips habits={habits} />
+              <RadarChart data={radar} />
             </div>
           </div>
 
