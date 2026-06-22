@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,10 +13,10 @@ export interface SelectOption {
 }
 
 /**
- * Custom dark-mode-visible dropdown. Native <select> renders its option list
- * with OS styling (invisible on a dark theme), so this replaces it everywhere:
- * a styled trigger + glass popover with keyboard nav, click-outside, and a
- * clear selected state. Reduced-motion aware.
+ * Dark-mode-visible dropdown. The option list renders in a PORTAL with fixed
+ * positioning so it's never clipped by an `overflow-hidden` ancestor (that bug
+ * made the last option unclickable) and flips upward near the viewport edge.
+ * Keyboard nav, click-outside, reduced-motion aware.
  */
 export function Select({
   value,
@@ -37,21 +38,49 @@ export function Select({
   const reduced = useReducedMotion();
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
-  const rootRef = React.useRef<HTMLDivElement>(null);
+  const [pos, setPos] = React.useState<{ left: number; top: number; width: number; up: boolean; maxH: number } | null>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const panelRef = React.useRef<HTMLUListElement>(null);
 
   const selected = options.find((o) => o.value === value);
 
-  // Close on outside click.
+  const place = React.useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    const desired = Math.min(260, options.length * 38 + 10);
+    const up = spaceBelow < desired && spaceAbove > spaceBelow;
+    setPos({
+      left: r.left,
+      top: up ? r.top : r.bottom,
+      width: r.width,
+      up,
+      maxH: Math.max(140, (up ? spaceAbove : spaceBelow) - 12),
+    });
+  }, [options.length]);
+
+  // Reposition while open (scroll/resize) and close on outside click.
   React.useEffect(() => {
     if (!open) return;
+    place();
+    const onScroll = () => place();
     const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (triggerRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setOpen(false);
     };
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
     document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [open, place]);
 
-  // When opening, highlight the current selection.
   React.useEffect(() => {
     if (open) {
       const i = options.findIndex((o) => o.value === value);
@@ -89,9 +118,58 @@ export function Select({
     }
   };
 
+  const panel =
+    open && pos && typeof document !== "undefined"
+      ? createPortal(
+          <motion.ul
+            ref={panelRef}
+            role="listbox"
+            initial={reduced ? false : { opacity: 0, y: pos.up ? 4 : -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0, y: pos.up ? 4 : -4 }}
+            transition={{ duration: 0.12 }}
+            style={{
+              position: "fixed",
+              left: pos.left,
+              width: pos.width,
+              maxHeight: pos.maxH,
+              ...(pos.up
+                ? { bottom: window.innerHeight - pos.top + 6 }
+                : { top: pos.top + 6 }),
+            }}
+            className="z-[100] overflow-auto rounded-panel border border-foreground/10 bg-card/95 p-1 shadow-glow-violet backdrop-blur-xl"
+          >
+            {options.map((o, i) => {
+              const isSelected = o.value === value;
+              const isActive = i === active;
+              return (
+                <li key={o.value || `opt-${i}`} role="option" aria-selected={isSelected}>
+                  <button
+                    type="button"
+                    disabled={o.disabled}
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => !o.disabled && choose(o.value)}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-[8px] px-2.5 py-2 text-left text-sm transition-colors disabled:opacity-40",
+                      isActive ? "bg-violet/15 text-foreground" : "text-foreground/90",
+                      "hover:bg-violet/15"
+                    )}
+                  >
+                    <span className="truncate">{o.label}</span>
+                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-violet" />}
+                  </button>
+                </li>
+              );
+            })}
+          </motion.ul>,
+          document.body
+        )
+      : null;
+
   return (
-    <div ref={rootRef} className={cn("relative", className)}>
+    <div className={cn("relative", className)}>
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         aria-haspopup="listbox"
@@ -112,42 +190,7 @@ export function Select({
           )}
         />
       </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.ul
-            role="listbox"
-            initial={reduced ? false : { opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? undefined : { opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
-            className="absolute z-50 mt-1.5 max-h-60 w-full min-w-[8rem] overflow-auto rounded-panel border border-foreground/10 bg-card/95 p-1 shadow-glow-violet backdrop-blur-xl"
-          >
-            {options.map((o, i) => {
-              const isSelected = o.value === value;
-              const isActive = i === active;
-              return (
-                <li key={o.value || `opt-${i}`} role="option" aria-selected={isSelected}>
-                  <button
-                    type="button"
-                    disabled={o.disabled}
-                    onMouseEnter={() => setActive(i)}
-                    onClick={() => !o.disabled && choose(o.value)}
-                    className={cn(
-                      "flex w-full items-center justify-between gap-2 rounded-[8px] px-2.5 py-1.5 text-left text-sm transition-colors disabled:opacity-40",
-                      isActive ? "bg-violet/15 text-foreground" : "text-foreground/90",
-                      "hover:bg-violet/15"
-                    )}
-                  >
-                    <span className="truncate">{o.label}</span>
-                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-violet" />}
-                  </button>
-                </li>
-              );
-            })}
-          </motion.ul>
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{panel}</AnimatePresence>
     </div>
   );
 }

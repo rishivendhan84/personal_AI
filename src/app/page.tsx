@@ -100,11 +100,25 @@ export default async function DashboardPage() {
 
   const name = user?.name?.split(" ")[0] ?? "Operator";
 
+  // The focus shown on top of all cards = the user's editable focus (not the
+  // stale AI brief line, which could reference an already-completed task).
+  const focusText =
+    user?.current_focus &&
+    user.current_focus.trim().toLowerCase() !== "ship the paios vertical slice"
+      ? user.current_focus
+      : null;
+  // Hero top-3 comes from LIVE open tasks (excludes done) so completed items
+  // disappear immediately and never reappear from a cached brief.
+  const heroTop3 = topTasks
+    .slice(0, 3)
+    .map((t) => ({ id: t.id, title: t.title, reason: "", urgency: t.urgency }));
+
   if (!brief) {
     // No brief yet — still a working surface: quick-add tasks and complete
     // habits inline before generation. The interactive tiles don't need a brief.
     return (
       <div className="space-y-4">
+        {focusText && <BriefBanner focus={focusText} />}
         <BentoGrid>
           <BentoCard glow span="md:col-span-2 md:row-span-2">
             <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
@@ -143,7 +157,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      {c.focus && <BriefBanner focus={c.focus} />}
+      {focusText && <BriefBanner focus={focusText} />}
 
       <BentoGrid>
         <OperatorHero
@@ -151,7 +165,7 @@ export default async function DashboardPage() {
           focus={user?.current_focus ?? null}
           location={user?.current_location ?? null}
           timeZone={tz}
-          top3={c.top3}
+          top3={heroTop3}
           calendar={c.calendar}
           habits={habits}
           tasksDoneToday={tasksDoneToday}
