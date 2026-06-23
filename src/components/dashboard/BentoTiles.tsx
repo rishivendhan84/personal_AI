@@ -169,11 +169,11 @@ function partsInTz(tz?: string): { y: number; m: number; d: number } {
 }
 
 /**
- * Calendar tile: a crisp this-week strip (weekday + date, today highlighted)
- * with today's event summary. Tap the chevron to expand a full month grid
- * inline — navigable by month — without leaving the dashboard.
+ * Calendar content (no card chrome) — a crisp this-week strip (weekday + date,
+ * today highlighted) with today's event summary, plus a chevron that expands a
+ * full, month-navigable grid inline. Embeddable inside the hero or a card.
  */
-export function CalendarTile({
+export function CalendarPanel({
   calendar,
   timeZone,
 }: {
@@ -219,42 +219,38 @@ export function CalendarTile({
     });
 
   return (
-    <BentoCard>
-      <BentoHeader
-        icon={CalendarClock}
-        title="Calendar"
-        action={
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-label={expanded ? "Collapse calendar" : "Expand calendar"}
-            aria-expanded={expanded}
-            className="rounded-chip p-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
-          >
-            <ChevronDown
-              className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-180")}
-            />
-          </button>
-        }
-      />
-
-      <div className="mb-3 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold text-foreground">
-          <CountUp value={calendar.length} animateOnMount={false} />
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {calendar.length === 1 ? "event" : "events"} today
-          {next && (
-            <>
-              {" · "}
-              <span className="font-mono tabular-nums text-violet">
-                {fmtTime(next.start_at, timeZone)}
-              </span>{" "}
-              {next.title}
-            </>
-          )}
-        </span>
+    <div className="flex h-full flex-col">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <CalendarClock className="h-3.5 w-3.5 text-violet" />
+          Calendar
+        </p>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-label={expanded ? "Collapse calendar" : "Expand calendar"}
+          aria-expanded={expanded}
+          className="rounded-chip p-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+        >
+          <ChevronDown
+            className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-180")}
+          />
+        </button>
       </div>
+
+      <p className="mb-3 text-xs text-muted-foreground">
+        <span className="font-semibold text-foreground">{calendar.length}</span>{" "}
+        {calendar.length === 1 ? "event" : "events"} today
+        {next && (
+          <>
+            {" · "}
+            <span className="font-mono tabular-nums text-violet">
+              {fmtTime(next.start_at, timeZone)}
+            </span>{" "}
+            {next.title}
+          </>
+        )}
+      </p>
 
       {/* This-week strip */}
       <div className="grid grid-cols-7 gap-1">
@@ -281,12 +277,7 @@ export function CalendarTile({
               >
                 {dt.getDate()}
               </span>
-              <span
-                className={cn(
-                  "h-1 w-1 rounded-full",
-                  events ? "bg-cyan" : "bg-transparent"
-                )}
-              />
+              <span className={cn("h-1 w-1 rounded-full", events ? "bg-cyan" : "bg-transparent")} />
             </Link>
           );
         })}
@@ -368,6 +359,21 @@ export function CalendarTile({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/** Card-wrapped calendar (used when no brief / standalone). */
+export function CalendarTile({
+  calendar,
+  timeZone,
+}: {
+  calendar: DailyBriefContent["calendar"];
+  timeZone?: string;
+}) {
+  return (
+    <BentoCard>
+      <CalendarPanel calendar={calendar} timeZone={timeZone} />
     </BentoCard>
   );
 }

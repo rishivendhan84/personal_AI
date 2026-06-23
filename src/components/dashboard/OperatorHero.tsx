@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import {
   MapPin,
   Crosshair,
-  CalendarClock,
   Flame,
   CheckCircle2,
   Loader2,
@@ -19,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Clock } from "./Clock";
 import { QuickAddTask } from "./QuickAddTask";
 import { RadarChart, type RadarDatum } from "./LifeRadar";
+import { CalendarPanel } from "./BentoTiles";
 import { USER_TZ, greeting } from "@/lib/ui";
 import type { DailyBriefContent } from "@/lib/db/types";
 
@@ -48,10 +48,9 @@ export function OperatorHero({
   radar: RadarDatum[];
 }) {
   const hello = greeting(new Date(), timeZone);
-  const nextEvents = calendar.slice(0, 4);
 
   return (
-    <BentoCard glow span="lg:col-span-2" className="p-0">
+    <BentoCard glow className="p-0">
       <Spotlight className="h-full">
         <div className="flex h-full flex-col gap-5 p-6 sm:p-7">
           {/* Greeting + clock */}
@@ -78,7 +77,7 @@ export function OperatorHero({
           {/* Quick-add — always-visible capture */}
           <QuickAddTask />
 
-          {/* Life radar (left) · schedule + day stats (right) — fills the hero */}
+          {/* Life radar (left) · this-week calendar (right) — fills the hero */}
           <div className="grid flex-1 items-stretch gap-6 lg:grid-cols-2">
             {/* LEFT — Life radar */}
             <div className="flex min-w-0 flex-col">
@@ -91,43 +90,25 @@ export function OperatorHero({
               </div>
             </div>
 
-            {/* RIGHT — schedule + day stats (stats pinned to the bottom) */}
-            <div className="flex flex-col gap-4">
-              <div>
-                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  <CalendarClock className="h-3.5 w-3.5 text-violet" />
-                  Up next
-                </p>
-                {nextEvents.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No events today.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {nextEvents.map((e, i) => (
-                      <li key={`${e.title}-${i}`} className="flex items-baseline gap-2 text-sm">
-                        <span className="w-14 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                          {fmtTime(e.start_at, timeZone)}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-foreground">{e.title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="mt-auto flex items-center gap-6 border-t border-foreground/5 pt-4">
-                <Stat
-                  icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
-                  label="Done today"
-                  value={tasksDoneToday}
-                />
-                <Stat
-                  icon={<Flame className="h-4 w-4 text-caution" />}
-                  label="Best streak"
-                  value={bestStreak}
-                  suffix={bestStreak === 1 ? " day" : " days"}
-                />
-              </div>
+            {/* RIGHT — this-week calendar (expands to a month inline) */}
+            <div className="flex min-w-0 flex-col">
+              <CalendarPanel calendar={calendar} timeZone={timeZone} />
             </div>
+          </div>
+
+          {/* Day stats — pinned to the bottom of the hero */}
+          <div className="flex items-center gap-6 border-t border-foreground/5 pt-4">
+            <Stat
+              icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
+              label="Done today"
+              value={tasksDoneToday}
+            />
+            <Stat
+              icon={<Flame className="h-4 w-4 text-caution" />}
+              label="Best streak"
+              value={bestStreak}
+              suffix={bestStreak === 1 ? " day" : " days"}
+            />
           </div>
         </div>
       </Spotlight>
@@ -226,13 +207,4 @@ function Stat({
       </div>
     </div>
   );
-}
-
-function fmtTime(iso: string, timeZone?: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(iso));
 }

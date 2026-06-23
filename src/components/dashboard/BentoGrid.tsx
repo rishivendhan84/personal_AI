@@ -76,11 +76,11 @@ export function StackColumn({
 }
 
 /**
- * Masonry region — CSS multi-columns. Each card flows independently into the
- * shortest column, so one card growing never changes a neighbour's height and
- * there are no row-alignment gaps. Used for the summary tiles.
+ * The main (2/3) column: the hero on top with the summary masonry flowing up
+ * directly beneath it, so there's no dead gap under the hero. `motion.div`
+ * forwards the parent stagger to the hero (the masonry self-animates).
  */
-export function BentoMasonry({
+export function LeftColumn({
   children,
   className,
 }: {
@@ -88,14 +88,33 @@ export function BentoMasonry({
   className?: string;
 }) {
   return (
+    <motion.div className={cn("flex flex-col gap-4 lg:col-span-2", className)}>
+      {children}
+    </motion.div>
+  );
+}
+
+/**
+ * Masonry region — CSS multi-columns. Each card flows independently into the
+ * shortest column, so one card growing never changes a neighbour's height and
+ * there are no row-alignment gaps. Used for the summary tiles.
+ */
+export function BentoMasonry({
+  children,
+  className,
+  columns = "columns-1 sm:columns-2 lg:columns-3",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  /** Tailwind multi-column classes controlling the column count. */
+  columns?: string;
+}) {
+  return (
     <motion.div
       variants={bentoContainer}
       initial="hidden"
       animate="show"
-      className={cn(
-        "columns-1 gap-4 sm:columns-2 lg:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid",
-        className
-      )}
+      className={cn(columns, "gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid", className)}
     >
       {children}
     </motion.div>

@@ -13,7 +13,13 @@ import type {
   FinanceSnapshot,
 } from "@/lib/db/types";
 import { SetupHint } from "@/components/ui/page";
-import { BentoGrid, TopRegion, StackColumn, BentoMasonry } from "@/components/dashboard/BentoGrid";
+import {
+  BentoGrid,
+  TopRegion,
+  LeftColumn,
+  StackColumn,
+  BentoMasonry,
+} from "@/components/dashboard/BentoGrid";
 import { OperatorHero } from "@/components/dashboard/OperatorHero";
 import {
   TasksTile,
@@ -118,42 +124,44 @@ export default async function DashboardPage() {
       <div className="space-y-4">
         {focusText && <BriefBanner focus={focusText} />}
         <TopRegion>
-          <BentoCard glow span="lg:col-span-2">
-            <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
-              <div>
-                <CalendarClock className="mx-auto h-8 w-8 text-violet" />
-                <h1 className="mt-4 font-serif text-4xl leading-tight tracking-tight">
-                  No brief yet today
-                </h1>
-                <p className="mb-6 mt-2 max-w-sm text-sm text-muted-foreground">
-                  Generate your daily brief to see your focus, priorities, and schedule — or just
-                  start working below.
-                </p>
-                <GenerateBriefButton />
+          <LeftColumn>
+            <BentoCard glow>
+              <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
+                <div>
+                  <CalendarClock className="mx-auto h-8 w-8 text-violet" />
+                  <h1 className="mt-4 font-serif text-4xl leading-tight tracking-tight">
+                    No brief yet today
+                  </h1>
+                  <p className="mb-6 mt-2 max-w-sm text-sm text-muted-foreground">
+                    Generate your daily brief to see your focus, priorities, and schedule — or just
+                    start working below.
+                  </p>
+                  <GenerateBriefButton />
+                </div>
+                <div className="w-full max-w-md text-left">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Quick capture
+                  </p>
+                  <QuickAddTask />
+                </div>
+                <div className="w-full max-w-sm">
+                  <RadarChart data={lifeScores} />
+                </div>
               </div>
-              <div className="w-full max-w-md text-left">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Quick capture
-                </p>
-                <QuickAddTask />
-              </div>
-              <div className="w-full max-w-sm">
-                <RadarChart data={lifeScores} />
-              </div>
-            </div>
-          </BentoCard>
+            </BentoCard>
+            <BentoMasonry columns="columns-1 sm:columns-2">
+              <TasksTile counts={taskCounts} tasks={topTasks} />
+              <CalendarTile calendar={[]} timeZone={tz} />
+              <GoalsTile goals={goals} />
+              <NutritionTile calories={nutrition.calories} target={nutrition.target} />
+              <FinanceTile netWorth={netWorth} />
+            </BentoMasonry>
+          </LeftColumn>
           <StackColumn>
             <FocusTile />
             <HabitsTile habits={habits} bestStreak={bestStreak} />
           </StackColumn>
         </TopRegion>
-        <BentoMasonry>
-          <TasksTile counts={taskCounts} tasks={topTasks} />
-          <CalendarTile calendar={[]} timeZone={tz} />
-          <GoalsTile goals={goals} />
-          <NutritionTile calories={nutrition.calories} target={nutrition.target} />
-          <FinanceTile netWorth={netWorth} />
-        </BentoMasonry>
       </div>
     );
   }
@@ -165,28 +173,29 @@ export default async function DashboardPage() {
       {focusText && <BriefBanner focus={focusText} />}
 
       <TopRegion>
-        <OperatorHero
-          name={name}
-          focus={user?.current_focus ?? null}
-          location={user?.current_location ?? null}
-          timeZone={tz}
-          calendar={c.calendar}
-          tasksDoneToday={tasksDoneToday}
-          bestStreak={bestStreak}
-          radar={lifeScores}
-        />
+        <LeftColumn>
+          <OperatorHero
+            name={name}
+            focus={user?.current_focus ?? null}
+            location={user?.current_location ?? null}
+            timeZone={tz}
+            calendar={c.calendar}
+            tasksDoneToday={tasksDoneToday}
+            bestStreak={bestStreak}
+            radar={lifeScores}
+          />
+          <BentoMasonry columns="columns-1 sm:columns-2">
+            <TasksTile counts={taskCounts} tasks={topTasks} />
+            <GoalsTile goals={goals} />
+            <NutritionTile calories={nutrition.calories} target={nutrition.target} />
+            <FinanceTile netWorth={netWorth} />
+          </BentoMasonry>
+        </LeftColumn>
         <StackColumn>
           <FocusTile />
           <HabitsTile habits={habits} bestStreak={bestStreak} />
         </StackColumn>
       </TopRegion>
-      <BentoMasonry>
-        <TasksTile counts={taskCounts} tasks={topTasks} />
-        <CalendarTile calendar={c.calendar} timeZone={tz} />
-        <GoalsTile goals={goals} />
-        <NutritionTile calories={nutrition.calories} target={nutrition.target} />
-        <FinanceTile netWorth={netWorth} />
-      </BentoMasonry>
     </div>
   );
 }
