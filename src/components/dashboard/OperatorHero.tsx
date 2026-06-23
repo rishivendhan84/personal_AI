@@ -53,7 +53,7 @@ export function OperatorHero({
   return (
     <BentoCard glow span="md:col-span-2 md:row-span-2" className="p-0">
       <Spotlight className="h-full">
-        <div className="flex h-full flex-col gap-6 p-6 sm:p-7">
+        <div className="flex h-full flex-col gap-5 p-6 sm:p-7">
           {/* Greeting + clock */}
           <div className="flex items-start justify-between gap-4">
             <h1 className="font-serif text-4xl leading-[1.05] tracking-tight text-foreground sm:text-5xl">
@@ -78,51 +78,56 @@ export function OperatorHero({
           {/* Quick-add — always-visible capture */}
           <QuickAddTask />
 
-          {/* Up next (left) · Life radar (right) — fills the hero height */}
-          <div className="grid flex-1 items-center gap-6 lg:grid-cols-2">
-            <div>
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                <CalendarClock className="h-3.5 w-3.5 text-violet" />
-                Up next
-              </p>
-              {nextEvents.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No events today.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {nextEvents.map((e, i) => (
-                    <li key={`${e.title}-${i}`} className="flex items-baseline gap-2 text-sm">
-                      <span className="w-14 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                        {fmtTime(e.start_at, timeZone)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-foreground">{e.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="min-w-0">
-              <p className="mb-1 flex items-center justify-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {/* Life radar (left) · schedule + day stats (right) — fills the hero */}
+          <div className="grid flex-1 items-stretch gap-6 lg:grid-cols-2">
+            {/* LEFT — Life radar */}
+            <div className="flex min-w-0 flex-col">
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 <Radar className="h-3.5 w-3.5 text-violet" />
                 Life radar
               </p>
-              <RadarChart data={radar} />
+              <div className="flex flex-1 items-center justify-center">
+                <RadarChart data={radar} />
+              </div>
             </div>
-          </div>
 
-          {/* Hero stats — count up once on load */}
-          <div className="flex items-center gap-6 border-t border-foreground/5 pt-4">
-            <Stat
-              icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
-              label="Done today"
-              value={tasksDoneToday}
-            />
-            <Stat
-              icon={<Flame className="h-4 w-4 text-caution" />}
-              label="Best streak"
-              value={bestStreak}
-              suffix={bestStreak === 1 ? " day" : " days"}
-            />
+            {/* RIGHT — schedule + day stats (stats pinned to the bottom) */}
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <CalendarClock className="h-3.5 w-3.5 text-violet" />
+                  Up next
+                </p>
+                {nextEvents.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No events today.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {nextEvents.map((e, i) => (
+                      <li key={`${e.title}-${i}`} className="flex items-baseline gap-2 text-sm">
+                        <span className="w-14 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                          {fmtTime(e.start_at, timeZone)}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-foreground">{e.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="mt-auto flex items-center gap-6 border-t border-foreground/5 pt-4">
+                <Stat
+                  icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
+                  label="Done today"
+                  value={tasksDoneToday}
+                />
+                <Stat
+                  icon={<Flame className="h-4 w-4 text-caution" />}
+                  label="Best streak"
+                  value={bestStreak}
+                  suffix={bestStreak === 1 ? " day" : " days"}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </Spotlight>

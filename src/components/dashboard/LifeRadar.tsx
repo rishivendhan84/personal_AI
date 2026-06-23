@@ -16,7 +16,7 @@ const CYAN = "#22D3EE";
 
 // SVG geometry. The chart sits in a square; padding leaves room for labels.
 const SIZE = 240; // chart diameter region (center-to-edge = SIZE/2)
-const PAD = 56; // breathing room around the chart for axis labels
+const PAD = 78; // generous room around the chart so axis labels never clip
 const VIEW = SIZE + PAD * 2;
 const CENTER = VIEW / 2;
 const MAX_R = SIZE / 2;
