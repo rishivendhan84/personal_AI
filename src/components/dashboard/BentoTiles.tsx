@@ -1,8 +1,20 @@
 "use client";
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ListChecks, CalendarClock, Target, Wallet, Check, Loader2 } from "lucide-react";
+import {
+  ListChecks,
+  CalendarClock,
+  Target,
+  Wallet,
+  Check,
+  Loader2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpRight,
+} from "lucide-react";
 import { BentoCard, BentoHeader } from "@/components/ui/bento-card";
 import { CountUp } from "@/components/ui/count-up";
 import { useReducedMotion } from "@/lib/motion";
@@ -139,7 +151,28 @@ function TaskRow({ task, onDone }: { task: DashTask; onDone: () => void }) {
   );
 }
 
-/** Calendar tile: today's event count + next event time. */
+const WEEK_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DOW_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+
+/** Calendar Y/M/D in a given timezone (today, robustly). */
+function partsInTz(tz?: string): { y: number; m: number; d: number } {
+  const [y, m, d] = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .format(new Date())
+    .split("-")
+    .map(Number);
+  return { y, m: m - 1, d };
+}
+
+/**
+ * Calendar tile: a crisp this-week strip (weekday + date, today highlighted)
+ * with today's event summary. Tap the chevron to expand a full month grid
+ * inline — navigable by month — without leaving the dashboard.
+ */
 export function CalendarTile({
   calendar,
   timeZone,
@@ -147,26 +180,194 @@ export function CalendarTile({
   calendar: DailyBriefContent["calendar"];
   timeZone?: string;
 }) {
+  const reduced = useReducedMotion();
+  const [expanded, setExpanded] = React.useState(false);
   const next = calendar[0];
+
+  const today = React.useMemo(() => partsInTz(timeZone), [timeZone]);
+  const isToday = (dt: Date) =>
+    dt.getFullYear() === today.y && dt.getMonth() === today.m && dt.getDate() === today.d;
+
+  // This week (Mon-first) around today.
+  const week = React.useMemo(() => {
+    const base = new Date(today.y, today.m, today.d);
+    const offset = (base.getDay() + 6) % 7; // Mon = 0
+    const monday = new Date(today.y, today.m, today.d - offset);
+    return Array.from({ length: 7 }, (_, i) =>
+      new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+    );
+  }, [today]);
+
+  // Month being viewed in the expanded grid (defaults to current month).
+  const [vm, setVm] = React.useState({ y: today.y, m: today.m });
+  const monthCells = React.useMemo(() => {
+    const first = new Date(vm.y, vm.m, 1);
+    const startOffset = (first.getDay() + 6) % 7;
+    const gridStart = new Date(vm.y, vm.m, 1 - startOffset);
+    return Array.from({ length: 42 }, (_, i) =>
+      new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i)
+    );
+  }, [vm]);
+  const monthLabel = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(vm.y, vm.m, 1));
+  const shiftMonth = (delta: number) =>
+    setVm(({ y, m }) => {
+      const d = new Date(y, m + delta, 1);
+      return { y: d.getFullYear(), m: d.getMonth() };
+    });
+
   return (
     <BentoCard>
-      <BentoHeader icon={CalendarClock} title="Calendar" href="/calendar" />
-      <div className="mb-2 text-2xl font-semibold text-foreground">
-        <CountUp value={calendar.length} animateOnMount={false} />
-        <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+      <BentoHeader
+        icon={CalendarClock}
+        title="Calendar"
+        action={
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-label={expanded ? "Collapse calendar" : "Expand calendar"}
+            aria-expanded={expanded}
+            className="rounded-chip p-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+          >
+            <ChevronDown
+              className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-180")}
+            />
+          </button>
+        }
+      />
+
+      <div className="mb-3 flex items-baseline gap-2">
+        <span className="text-2xl font-semibold text-foreground">
+          <CountUp value={calendar.length} animateOnMount={false} />
+        </span>
+        <span className="text-xs text-muted-foreground">
           {calendar.length === 1 ? "event" : "events"} today
+          {next && (
+            <>
+              {" · "}
+              <span className="font-mono tabular-nums text-violet">
+                {fmtTime(next.start_at, timeZone)}
+              </span>{" "}
+              {next.title}
+            </>
+          )}
         </span>
       </div>
-      {next ? (
-        <p className="flex items-baseline gap-2 text-sm">
-          <span className="font-mono text-xs tabular-nums text-violet">
-            {fmtTime(next.start_at, timeZone)}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-muted-foreground">{next.title}</span>
-        </p>
-      ) : (
-        <p className="text-xs text-muted-foreground">Open calendar.</p>
-      )}
+
+      {/* This-week strip */}
+      <div className="grid grid-cols-7 gap-1">
+        {week.map((dt, i) => {
+          const me = isToday(dt);
+          const events = me && calendar.length > 0;
+          return (
+            <Link
+              key={i}
+              href="/calendar"
+              className={cn(
+                "flex flex-col items-center gap-0.5 rounded-panel py-1.5 transition-colors",
+                me ? "bg-violet/20 ring-1 ring-violet/40" : "hover:bg-foreground/[0.05]"
+              )}
+            >
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {WEEK_LABELS[i]}
+              </span>
+              <span
+                className={cn(
+                  "text-sm tabular-nums",
+                  me ? "font-semibold text-foreground" : "text-muted-foreground"
+                )}
+              >
+                {dt.getDate()}
+              </span>
+              <span
+                className={cn(
+                  "h-1 w-1 rounded-full",
+                  events ? "bg-cyan" : "bg-transparent"
+                )}
+              />
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Expanded month grid */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={reduced ? false : { height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={reduced ? undefined : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 border-t border-foreground/5 pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => shiftMonth(-1)}
+                  aria-label="Previous month"
+                  className="rounded-chip p-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-sm font-medium text-foreground">{monthLabel}</span>
+                <button
+                  type="button"
+                  onClick={() => shiftMonth(1)}
+                  aria-label="Next month"
+                  className="rounded-chip p-1 text-muted-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mb-1 grid grid-cols-7 gap-1">
+                {DOW_LETTERS.map((d, i) => (
+                  <span
+                    key={i}
+                    className="text-center text-[10px] uppercase tracking-wide text-muted-foreground/70"
+                  >
+                    {d}
+                  </span>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {monthCells.map((dt, i) => {
+                  const me = isToday(dt);
+                  const outside = dt.getMonth() !== vm.m;
+                  return (
+                    <Link
+                      key={i}
+                      href="/calendar"
+                      className={cn(
+                        "grid h-8 place-items-center rounded-panel text-xs tabular-nums transition-colors",
+                        me
+                          ? "bg-violet/20 font-semibold text-foreground ring-1 ring-violet/40"
+                          : outside
+                            ? "text-muted-foreground/30 hover:bg-foreground/[0.04]"
+                            : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                      )}
+                    >
+                      {dt.getDate()}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <Link
+                href="/calendar"
+                className="mt-3 inline-flex items-center gap-1 text-xs text-violet transition-colors hover:text-foreground"
+              >
+                Open full calendar
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </BentoCard>
   );
 }

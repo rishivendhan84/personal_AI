@@ -13,7 +13,7 @@ import type {
   FinanceSnapshot,
 } from "@/lib/db/types";
 import { SetupHint } from "@/components/ui/page";
-import { BentoGrid } from "@/components/dashboard/BentoGrid";
+import { BentoGrid, TopRegion, StackColumn, BentoMasonry } from "@/components/dashboard/BentoGrid";
 import { OperatorHero } from "@/components/dashboard/OperatorHero";
 import {
   TasksTile,
@@ -117,8 +117,8 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-4">
         {focusText && <BriefBanner focus={focusText} />}
-        <BentoGrid>
-          <BentoCard glow span="md:col-span-2 md:row-span-2">
+        <TopRegion>
+          <BentoCard glow span="lg:col-span-2">
             <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
               <div>
                 <CalendarClock className="mx-auto h-8 w-8 text-violet" />
@@ -142,14 +142,18 @@ export default async function DashboardPage() {
               </div>
             </div>
           </BentoCard>
-          <FocusTile />
-          <HabitsTile habits={habits} bestStreak={bestStreak} />
+          <StackColumn>
+            <FocusTile />
+            <HabitsTile habits={habits} bestStreak={bestStreak} />
+          </StackColumn>
+        </TopRegion>
+        <BentoMasonry>
           <TasksTile counts={taskCounts} tasks={topTasks} />
+          <CalendarTile calendar={[]} timeZone={tz} />
           <GoalsTile goals={goals} />
           <NutritionTile calories={nutrition.calories} target={nutrition.target} />
-          <CalendarTile calendar={[]} timeZone={tz} />
           <FinanceTile netWorth={netWorth} />
-        </BentoGrid>
+        </BentoMasonry>
       </div>
     );
   }
@@ -160,7 +164,7 @@ export default async function DashboardPage() {
     <div className="space-y-4">
       {focusText && <BriefBanner focus={focusText} />}
 
-      <BentoGrid>
+      <TopRegion>
         <OperatorHero
           name={name}
           focus={user?.current_focus ?? null}
@@ -171,14 +175,18 @@ export default async function DashboardPage() {
           bestStreak={bestStreak}
           radar={lifeScores}
         />
-        <FocusTile />
-        <HabitsTile habits={habits} bestStreak={bestStreak} />
+        <StackColumn>
+          <FocusTile />
+          <HabitsTile habits={habits} bestStreak={bestStreak} />
+        </StackColumn>
+      </TopRegion>
+      <BentoMasonry>
         <TasksTile counts={taskCounts} tasks={topTasks} />
+        <CalendarTile calendar={c.calendar} timeZone={tz} />
         <GoalsTile goals={goals} />
         <NutritionTile calories={nutrition.calories} target={nutrition.target} />
-        <CalendarTile calendar={c.calendar} timeZone={tz} />
         <FinanceTile netWorth={netWorth} />
-      </BentoGrid>
+      </BentoMasonry>
     </div>
   );
 }

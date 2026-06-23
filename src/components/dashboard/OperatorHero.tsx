@@ -51,7 +51,7 @@ export function OperatorHero({
   const nextEvents = calendar.slice(0, 4);
 
   return (
-    <BentoCard glow span="md:col-span-2 md:row-span-2" className="p-0">
+    <BentoCard glow span="lg:col-span-2" className="p-0">
       <Spotlight className="h-full">
         <div className="flex h-full flex-col gap-5 p-6 sm:p-7">
           {/* Greeting + clock */}
