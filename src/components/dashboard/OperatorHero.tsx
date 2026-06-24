@@ -84,9 +84,9 @@ export function OperatorHero({
           {/* Quick-add — always-visible capture */}
           <QuickAddTask />
 
-          {/* Life radar (left) · this-week calendar (right) — fills the hero */}
+          {/* Life radar (left) · this-week calendar + day stats (right) */}
           <div className="grid flex-1 items-stretch gap-6 lg:grid-cols-2">
-            {/* LEFT — Life radar */}
+            {/* LEFT — Life radar (vertically centered in its column) */}
             <div className="flex min-w-0 flex-col">
               <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 <Radar className="h-3.5 w-3.5 text-violet" />
@@ -97,25 +97,23 @@ export function OperatorHero({
               </div>
             </div>
 
-            {/* RIGHT — this-week calendar (expands to a month inline) */}
+            {/* RIGHT — calendar (top) with day stats pinned to the bottom */}
             <div className="flex min-w-0 flex-col">
               <CalendarPanel calendar={calendar} timeZone={timeZone} />
+              <div className="mt-auto flex items-center gap-6 border-t border-foreground/5 pt-4">
+                <Stat
+                  icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
+                  label="Done today"
+                  value={tasksDoneToday}
+                />
+                <Stat
+                  icon={<Flame className="h-4 w-4 text-caution" />}
+                  label="Best streak"
+                  value={bestStreak}
+                  suffix={bestStreak === 1 ? " day" : " days"}
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Day stats — pinned to the bottom of the hero */}
-          <div className="flex items-center gap-6 border-t border-foreground/5 pt-4">
-            <Stat
-              icon={<CheckCircle2 className="h-4 w-4 text-positive" />}
-              label="Done today"
-              value={tasksDoneToday}
-            />
-            <Stat
-              icon={<Flame className="h-4 w-4 text-caution" />}
-              label="Best streak"
-              value={bestStreak}
-              suffix={bestStreak === 1 ? " day" : " days"}
-            />
           </div>
         </div>
       </Spotlight>

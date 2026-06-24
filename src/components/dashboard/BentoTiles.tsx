@@ -219,7 +219,7 @@ export function CalendarPanel({
     });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           <CalendarClock className="h-3.5 w-3.5 text-violet" />

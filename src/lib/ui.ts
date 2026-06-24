@@ -45,7 +45,7 @@ export const USER_TZ = "Asia/Kolkata";
  * birthday; LIFE_HORIZON_YEARS is the horizon for "weeks remaining" (a personal
  * active-life target — adjust to taste, it's not a forecast).
  */
-export const USER_BIRTH_DATE = "2001-06-24"; // YYYY-MM-DD
+export const USER_BIRTH_DATE = "2000-07-09"; // YYYY-MM-DD
 export const LIFE_HORIZON_YEARS = 60;
 
 export interface LifeWeeks {
