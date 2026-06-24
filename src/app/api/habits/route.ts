@@ -1,4 +1,4 @@
-import { route, ok } from "@/lib/http";
+import { route, ok, fail } from "@/lib/http";
 import { getAdminClient } from "@/lib/db/server";
 import { DEFAULT_TZ, dateKeyInTz } from "@/lib/utils";
 import { computeStreak } from "@/lib/streaks";
@@ -51,4 +51,32 @@ export const GET = route(async () => {
   });
 
   return ok({ habits: view, todayKey });
+});
+
+/**
+ * POST /api/habits — create a new active habit. Body: { name, target? }.
+ * Returns the created habit as a fresh HabitView (no logs yet → zero streaks).
+ */
+export const POST = route(async (req: Request) => {
+  const db = getAdminClient();
+  if (!db) return ok({ skipped: true });
+
+  const body = (await req.json()) as { name?: string; target?: string | null };
+  const name = body.name?.trim();
+  if (!name) return fail("name is required", 400);
+
+  const { data, error } = await db
+    .from("habits")
+    .insert({ name, target: body.target?.trim() || null, active: true })
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  const view: HabitView = {
+    habit: data as Habit,
+    doneToday: false,
+    currentStreak: 0,
+    longestStreak: 0,
+  };
+  return ok({ habit: view });
 });

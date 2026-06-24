@@ -40,6 +40,41 @@ export const URGENCY_ORDER: TaskUrgency[] = ["today", "week", "month", "someday"
 /** The user's home timezone (Chennai, IST). Used for greetings/clock display. */
 export const USER_TZ = "Asia/Kolkata";
 
+/**
+ * "Life in weeks" memento for the hero. Set USER_BIRTH_DATE to your real
+ * birthday; LIFE_HORIZON_YEARS is the horizon for "weeks remaining" (a personal
+ * active-life target — adjust to taste, it's not a forecast).
+ */
+export const USER_BIRTH_DATE = "2001-06-24"; // YYYY-MM-DD
+export const LIFE_HORIZON_YEARS = 60;
+
+export interface LifeWeeks {
+  age: number;
+  lived: number;
+  remaining: number;
+}
+
+/** Whole weeks lived since birth + whole weeks left until the horizon birthday. */
+export function lifeWeeks(
+  now: Date = new Date(),
+  birth: string = USER_BIRTH_DATE,
+  horizon: number = LIFE_HORIZON_YEARS
+): LifeWeeks {
+  const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const dob = new Date(`${birth}T00:00:00`);
+  const end = new Date(dob);
+  end.setFullYear(dob.getFullYear() + horizon);
+
+  const lived = Math.max(0, Math.round((now.getTime() - dob.getTime()) / MS_WEEK));
+  const remaining = Math.max(0, Math.round((end.getTime() - now.getTime()) / MS_WEEK));
+
+  let age = now.getFullYear() - dob.getFullYear();
+  const m = now.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1;
+
+  return { age, lived, remaining };
+}
+
 /** Time-of-day greeting for the Operator hero. */
 export function greeting(now: Date, tz = USER_TZ): string {
   const hour = Number(

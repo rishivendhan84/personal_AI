@@ -18,7 +18,7 @@ export function Clock({ timeZone }: { timeZone?: string }) {
 
   if (!now) {
     // Stable placeholder keeps layout from shifting on hydrate.
-    return <div className="h-[22px] w-[120px]" aria-hidden />;
+    return <div className="h-[22px] w-[150px]" aria-hidden />;
   }
 
   const time = new Intl.DateTimeFormat("en-US", {
@@ -26,7 +26,7 @@ export function Clock({ timeZone }: { timeZone?: string }) {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false,
+    hour12: true,
   }).format(now);
 
   return (

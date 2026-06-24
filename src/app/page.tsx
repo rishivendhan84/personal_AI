@@ -3,7 +3,7 @@ import { getLatestBrief } from "@/lib/brief";
 import { getAdminClient } from "@/lib/db/server";
 import { USER_ID, dateKeyInTz } from "@/lib/utils";
 import { computeStreak } from "@/lib/streaks";
-import { URGENCY_ORDER, USER_TZ } from "@/lib/ui";
+import { URGENCY_ORDER, USER_TZ, lifeWeeks } from "@/lib/ui";
 import type {
   User,
   CalendarEvent,
@@ -183,6 +183,7 @@ export default async function DashboardPage() {
             tasksDoneToday={tasksDoneToday}
             bestStreak={bestStreak}
             radar={lifeScores}
+            life={lifeWeeks()}
           />
           <BentoMasonry columns="columns-1 sm:columns-2">
             <TasksTile counts={taskCounts} tasks={topTasks} />

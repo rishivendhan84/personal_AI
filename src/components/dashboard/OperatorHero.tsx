@@ -19,7 +19,7 @@ import { Clock } from "./Clock";
 import { QuickAddTask } from "./QuickAddTask";
 import { RadarChart, type RadarDatum } from "./LifeRadar";
 import { CalendarPanel } from "./BentoTiles";
-import { USER_TZ, greeting } from "@/lib/ui";
+import { USER_TZ, greeting, type LifeWeeks } from "@/lib/ui";
 import type { DailyBriefContent } from "@/lib/db/types";
 
 /**
@@ -37,6 +37,7 @@ export function OperatorHero({
   tasksDoneToday,
   bestStreak,
   radar,
+  life,
 }: {
   name: string;
   focus: string | null;
@@ -46,6 +47,7 @@ export function OperatorHero({
   tasksDoneToday: number;
   bestStreak: number;
   radar: RadarDatum[];
+  life: LifeWeeks;
 }) {
   const hello = greeting(new Date(), timeZone);
 
@@ -58,8 +60,13 @@ export function OperatorHero({
             <h1 className="font-serif text-4xl leading-[1.05] tracking-tight text-foreground sm:text-5xl">
               <SplitText text={`${hello}, ${name}`} />
             </h1>
-            <div className="flex shrink-0 flex-col items-end gap-1">
+            <div className="flex shrink-0 flex-col items-end gap-1 text-right">
               <Clock timeZone={timeZone} />
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                Age {life.age} · ≈{life.lived.toLocaleString()} weeks lived
+                <br />
+                ≈{life.remaining.toLocaleString()} weeks remaining
+              </p>
             </div>
           </div>
 
