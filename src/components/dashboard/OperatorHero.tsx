@@ -60,17 +60,12 @@ export function OperatorHero({
             <h1 className="font-serif text-4xl leading-[1.05] tracking-tight text-foreground sm:text-5xl">
               <SplitText text={`${hello}, ${name}`} />
             </h1>
-            <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+            <div className="flex shrink-0 flex-col items-end gap-1">
               <Clock timeZone={timeZone} />
-              <p className="text-[11px] leading-snug text-muted-foreground">
-                Age {life.age} · ≈{life.lived.toLocaleString()} weeks lived
-                <br />
-                ≈{life.remaining.toLocaleString()} weeks remaining
-              </p>
             </div>
           </div>
 
-          {/* Focus pill (editable) + location chip */}
+          {/* Focus pill (editable) + location chip + life-in-weeks */}
           <div className="flex flex-wrap items-center gap-2">
             <EditableFocus focus={focus} />
             {location && (
@@ -79,6 +74,9 @@ export function OperatorHero({
                 {location}
               </span>
             )}
+            <span className="ml-auto text-xs text-muted-foreground">
+              ≈{life.lived.toLocaleString()} weeks lived · ≈{life.remaining.toLocaleString()} left
+            </span>
           </div>
 
           {/* Quick-add — always-visible capture */}
