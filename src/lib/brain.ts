@@ -201,6 +201,43 @@ export async function vectorSearch(q: string, k = 6): Promise<Source[]> {
   }));
 }
 
+// --- Notes search (lexical over the Keep-style notes board) ---------------
+
+/**
+ * Lexical recall over the notes table (Keep import + native notes). Defensive:
+ * the table may not exist yet (migration 0006), so any failure returns [] rather
+ * than taking down the Brain.
+ */
+export async function notesSearch(q: string, k = 5): Promise<Source[]> {
+  const db = getAdminClient();
+  if (!db) return [];
+  try {
+    const term = subjectTerm(q);
+    let query = db.from("notes").select("id, title, body, checklist").eq("archived", false).limit(k);
+    if (term && term !== q.trim().toLowerCase()) {
+      query = query.or(`title.ilike.%${term}%,body.ilike.%${term}%`);
+    }
+    const { data, error } = await query.order("updated_at", { ascending: false });
+    if (error) throw error;
+    return ((data ?? []) as {
+      id: string;
+      title: string | null;
+      body: string | null;
+      checklist: { text: string }[] | null;
+    }[]).map((n) => {
+      const checklistText = (n.checklist ?? []).map((c) => c.text).join(", ");
+      return {
+        type: "note" as const,
+        id: n.id,
+        title: n.title ?? undefined,
+        snippet: (n.body || checklistText || n.title || "").slice(0, 280),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 // --- Compose the answer ---------------------------------------------------
 
 const SYSTEM = `You are the user's second brain. Answer the question using ONLY the numbered sources provided. Cite every claim inline with bracketed numbers like [1], [2] that refer to the source numbers. If the sources do not contain the answer, say so plainly — never invent facts. Be concise.`;
@@ -226,7 +263,10 @@ export async function answer(q: string): Promise<BrainResult> {
 
   const tasks: Promise<Source[]>[] = [];
   if (route === "structured" || route === "mixed") tasks.push(structuredSearch(q));
-  if (route === "vector" || route === "mixed") tasks.push(vectorSearch(q));
+  if (route === "vector" || route === "mixed") {
+    tasks.push(vectorSearch(q));
+    tasks.push(notesSearch(q)); // notes are freeform recall, like journal/memory
+  }
   const sources = (await Promise.all(tasks)).flat();
 
   if (!llm || sources.length === 0) {

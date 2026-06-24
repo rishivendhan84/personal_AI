@@ -186,3 +186,36 @@ export interface FocusSession {
   task_title: string | null;
   completed_at: string;
 }
+
+export type NoteColor =
+  | "default"
+  | "red"
+  | "orange"
+  | "yellow"
+  | "green"
+  | "teal"
+  | "blue"
+  | "purple"
+  | "pink"
+  | "gray";
+
+export interface NoteChecklistItem {
+  text: string;
+  checked: boolean;
+}
+
+/** A Google Keep–style note (native; populated by the app + Keep Takeout import). */
+export interface Note {
+  id: string;
+  title: string | null;
+  body: string | null;
+  checklist: NoteChecklistItem[] | null;
+  color: string;
+  pinned: boolean;
+  archived: boolean;
+  labels: string[];
+  source: string; // 'app' | 'keep_takeout'
+  keep_id: string | null;
+  created_at: string;
+  updated_at: string;
+}

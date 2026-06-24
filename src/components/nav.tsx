@@ -11,6 +11,7 @@ import {
   Brain,
   Utensils,
   Hourglass,
+  StickyNote,
   Command as CommandIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ const links = [
   { href: "/nutrition", label: "Nutrition", icon: Utensils },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/finance", label: "Finance", icon: Wallet },
+  { href: "/notes", label: "Notes", icon: StickyNote },
   { href: "/brain", label: "Brain", icon: Brain },
 ];
 
